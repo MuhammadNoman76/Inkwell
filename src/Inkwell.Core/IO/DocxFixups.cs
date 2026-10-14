@@ -402,11 +402,16 @@ internal sealed partial class DocxWriteSession
     /// </summary>
     private void ScrubDanglingRelationships(StoryTree tree)
     {
-        var valid = new HashSet<string>(DocxXml.RelationshipIds(tree.Writer.Part), StringComparer.Ordinal);
+        var part = tree.Writer.Part;
+        var valid = new HashSet<string>(DocxXml.RelationshipIds(part), StringComparer.Ordinal);
+        var images = new HashSet<string>(part.Parts.Where(p => p.OpenXmlPart is ImagePart).Select(p => p.RelationshipId), StringComparer.Ordinal);
         foreach (var a in RelAttributes(tree.Xml.Root!).ToList())
         {
-            if (a.Parent == null || valid.Contains(a.Value)) continue;
+            if (a.Parent == null) continue;
             var owner = a.Parent;
+            // A picture's image must be an image part (a stale id could point at a header, say).
+            var mustBeImage = a.Name == Ns.R + "embed" && owner.Name == Ns.A + "blip" || a.Name == Ns.R + "id" && owner.Name == Ns.V + "imagedata";
+            if (mustBeImage ? images.Contains(a.Value) : valid.Contains(a.Value)) continue;
             if (owner.Name == Wn.Hyperlink)
             {
                 a.Remove();

@@ -188,6 +188,53 @@ public class DocxPreservationTests
         Docx.AssertValid(again, Fabricated);
     }
 
+    [Fact]
+    public void ChartMovedOutOfAHeaderThatIsDeleted_Survives()
+    {
+        var original = TestDocx.Create(TestDocx.P("Body") + "<w:sectPr><w:headerReference w:type=\"default\" r:id=\"rIdHeader\"/><w:pgSz w:w=\"12240\" w:h=\"15840\"/></w:sectPr>", (_, main) =>
+        {
+            var header = main.AddNewPart<HeaderPart>("rIdHeader");
+            var chart = header.AddNewPart<ChartPart>("rIdChart");
+            TestDocx.Write(chart, ChartXml);
+            TestDocx.Write(header, "<w:hdr " + TestDocx.Declarations + "><w:p>" + ChartFrame(1, "rIdChart") + "</w:p></w:hdr>");
+        });
+        var doc = Docx.Load(original);
+        var header = doc.HeadersFooters.Values.Single();
+        var chart = header.Paragraphs.First().Inlines.OfType<DrawingObject>().Single();
+        Assert.Equal("chart", chart.Kind);
+        header.Paragraphs.First().Inlines.Clear();
+        ((Paragraph)doc.Body.Blocks[0]).Inlines.Add(chart);
+        doc.Body.FinalSection.SetReference(true, "default", null);
+
+        var saved = Docx.Save(doc);
+        Docx.AssertValid(saved, Fabricated);
+        Assert.DoesNotContain(Docx.PartNames(saved), n => n.StartsWith("word/header", StringComparison.Ordinal));
+        var chartName = Docx.PartNames(original).Single(n => n.Contains("chart") && n.EndsWith(".xml", StringComparison.Ordinal) && !n.Contains("_rels"));
+        AssertSamePart(original, saved, chartName);
+        var back = Docx.Load(saved);
+        Assert.Equal("chart", ((Paragraph)back.Body.Blocks[0]).Inlines.OfType<DrawingObject>().Single().Kind);
+    }
+
+    [Fact]
+    public void PictureWhoseImageIdIsStale_IsLeftOutRatherThanPointingAtTheWrongPart()
+    {
+        var original = TestDocx.Create(TestDocx.P("x") + "<w:sectPr><w:headerReference w:type=\"default\" r:id=\"rIdHeader\"/></w:sectPr>", (_, main) =>
+        {
+            var header = main.AddNewPart<HeaderPart>("rIdHeader");
+            TestDocx.Write(header, "<w:hdr " + TestDocx.Declarations + "><w:p/></w:hdr>");
+        });
+        var doc = Docx.Load(original);
+        // A drawing whose XML points at "rIdHeader" (as if pasted from another document) and has no picture bytes.
+        var xml = TestDocx.InlinePicture("rIdHeader").Replace("<w:drawing>", "<w:drawing " + TestDocx.Declarations + ">");
+        var drawing = new DrawingObject { Kind = "picture", Width = 914400, Height = 914400, Original = XElement.Parse(xml) };
+        ((Paragraph)doc.Body.Blocks[0]).Inlines.Add(drawing);
+        var options = new DocxSaveOptions();
+        var saved = Docx.Save(doc, options);
+        Docx.AssertValid(saved);
+        Assert.Empty(Docx.Body(saved).Descendants(W + "drawing"));
+        Assert.NotEmpty(options.Warnings);
+    }
+
     // ------------------------------------------------------------------ equations, content controls, custom XML
 
     [Fact]
