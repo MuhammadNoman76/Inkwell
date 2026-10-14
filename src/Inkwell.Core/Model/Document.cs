@@ -206,6 +206,26 @@ public sealed class Document
     /// <summary>Changes to anything outside the blocks (styles, numbering, settings, notes…): bumped by the editor.</summary>
     public int Version { get; set; }
 
+    /// <summary>
+    /// Relationship ids already used by the main document part (set by the reader), so ids Inkwell gives new
+    /// headers and footers never collide with existing relationships.
+    /// </summary>
+    public HashSet<string> ReservedRelIds { get; } = new(StringComparer.Ordinal);
+
+    /// <summary>A relationship id for a new header / footer part of the main document part.</summary>
+    public string NewRelId()
+    {
+        for (var n = 1; ; n++)
+        {
+            var id = "rIdIw" + n;
+            if (!ReservedRelIds.Contains(id) && !HeadersFooters.ContainsKey(id))
+            {
+                ReservedRelIds.Add(id);
+                return id;
+            }
+        }
+    }
+
     public void NotePreserved(string category, string description)
     {
         var existing = Preserved.FirstOrDefault(p => p.Category == category && p.Description == description);
