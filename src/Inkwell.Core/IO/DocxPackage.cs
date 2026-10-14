@@ -216,6 +216,7 @@ internal static class DocxPackage
                         x = DocxXml.Load(ms);
                     }
                     ConvertStrictXml(x);
+                    if (x.Root != null) DocxFixups.Sanitize(x.Root);
                     DocxXml.Save(x, outStream);
                 }
                 else

@@ -407,14 +407,32 @@ internal sealed partial class DocxWriteSession
         }
     }
 
-    /// <summary>The root element's attributes of a part as it is in the package (for parts the model has no shell for).</summary>
+    /// <summary>
+    /// The root element of a part as it is in the package, with its attributes and no content (for parts the model
+    /// has no shell for). Only the start tag is read.
+    /// </summary>
     private static XElement? ExistingRootShell(OpenXmlPart? part)
     {
         if (part == null) return null;
         try
         {
-            var x = DocxXml.Load(part);
-            return x.Root == null ? null : DocxXml.Shell(x.Root);
+            using var s = part.GetStream(FileMode.Open, FileAccess.Read);
+            using var reader = System.Xml.XmlReader.Create(s, new System.Xml.XmlReaderSettings { DtdProcessing = System.Xml.DtdProcessing.Ignore, XmlResolver = null });
+            if (reader.MoveToContent() != System.Xml.XmlNodeType.Element) return null;
+            var root = new XElement(XName.Get(reader.LocalName, reader.NamespaceURI));
+            if (reader.MoveToFirstAttribute())
+            {
+                do
+                {
+                    XName name;
+                    if (reader.Prefix == "xmlns") name = XNamespace.Xmlns + reader.LocalName;
+                    else if (reader.Prefix.Length == 0 && reader.LocalName == "xmlns") name = "xmlns";
+                    else name = XName.Get(reader.LocalName, reader.NamespaceURI);
+                    root.SetAttributeValue(name, reader.Value);
+                }
+                while (reader.MoveToNextAttribute());
+            }
+            return root;
         }
         catch (Exception ex) when (ex is System.Xml.XmlException or IOException or InvalidDataException)
         {

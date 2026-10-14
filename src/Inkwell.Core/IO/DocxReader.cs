@@ -57,9 +57,9 @@ public static class DocxReader
     internal static Document LoadBytes(byte[] bytes, string? fileName)
     {
         var warnings = new List<string>();
-        var prepared = DocxPackage.Prepare(bytes, fileName, warnings);
         try
         {
+            var prepared = DocxPackage.Prepare(bytes, fileName, warnings);
             var doc = new DocxReadSession(prepared).Run();
             doc.Warnings.InsertRange(0, warnings);
             return doc;
