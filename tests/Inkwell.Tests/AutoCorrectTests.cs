@@ -66,8 +66,8 @@ public class AutoCorrectTests
     public void SmartQuotes_Languages()
     {
         Assert.Equal("Er sagte „ja“", Type("Er sagte \"ja\"", context: new AutoCorrectContext { Language = "de-DE" }));
-        Assert.Equal("Il a dit « oui »", Type("Il a dit \"oui \"", context: new AutoCorrectContext { Language = "fr-FR" }));
-        Assert.Equal("Il a dit « oui »", Type("Il a dit \"oui\"", context: new AutoCorrectContext { Language = "fr-FR" }));
+        Assert.Equal("Il a dit «\u00A0oui\u00A0»", Type("Il a dit \"oui \"", context: new AutoCorrectContext { Language = "fr-FR" }));
+        Assert.Equal("Il a dit «\u00A0oui\u00A0»", Type("Il a dit \"oui\"", context: new AutoCorrectContext { Language = "fr-FR" }));
     }
 
     [Fact]

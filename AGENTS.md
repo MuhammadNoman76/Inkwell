@@ -22,6 +22,10 @@ Inkwell is a free Windows word processor ("like Microsoft Word, but modern, bett
     - Pictures: `DrawingObject` with the picture's bytes in `Document.Media` (by SHA-256), size in EMU, wrap mode and float position; `Original` keeps the `w:drawing` XML so effects and crops survive (the writer patches size / wrap / position into it).
     - `Document.Source` keeps the original package bytes: saving starts from them, so parts Inkwell doesn't rewrite (macros, charts, SmartArt, custom XML, embeddings…) stay byte for byte.
   - `Templates/`: `DocumentDesigns` (the designs: style sets built on theme fonts).
+  - `Citations/`: APA 7, MLA 9, Chicago 17 (author-date) and IEEE. `CitationEngine` (one per source list and style: in-text citations, bibliography, 2020a/b, IEEE numbers by first citation), `CitationField` / `BibliographyField` (Word's field codes), `CitationModel` (runs, `Bibliography`-style paragraphs, CITATION fields). Output is `StyledText` (spans with italic / bold).
+  - `Editing/`: `AutoCorrect` + `MarkdownShortcuts` (pure text rules the editor runs after each keystroke; they return edits, never apply them), `DocumentStats` (word / character / paragraph counts matching Word's, measured against Word; cached per paragraph by `Block.Version`).
+  - `Proofing/`: `WindowsSpellChecker` (the Windows 8+ Spell Checking API, hand-declared COM, on a private MTA thread; unavailable on Windows 7). Tests must never call `Add`: it changes the user's Windows dictionary.
+  - `IO/`: `VersionHistory` (snapshots in `%LOCALAPPDATA%\Inkwell\History`, named mutex, caps) and `RecoveryStore` (crash copies in `%LOCALAPPDATA%\Inkwell\Recovery`). Both report errors through `OnError` and never throw.
 
 ## Units
 - Lengths in the model are twips (1/1440 inch), font sizes half-points, borders eighths of a point, drawings EMU (914 400 per inch) — exactly as in the XML. Layout works in WPF device-independent pixels (1/96 inch): twips / 15.

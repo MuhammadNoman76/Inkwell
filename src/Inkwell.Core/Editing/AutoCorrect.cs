@@ -217,7 +217,7 @@ public sealed class AutoCorrect
         "i.e.", "e.g.", "etc.", "vs.", "cf.", "al.", "approx.", "mr.", "mrs.", "ms.", "dr.", "prof.", "st.", "jr.", "sr.", "no.", "nos.",
         "fig.", "figs.", "eq.", "eqs.", "vol.", "vols.", "pp.", "p.", "a.m.", "p.m.", "inc.", "ltd.", "co.", "corp.", "u.s.", "u.k.",
         "ch.", "chap.", "sec.", "ed.", "eds.", "esp.", "dept.", "est.", "ca.", "viz.", "ibid.", "op.", "cit.", "rev.", "gen.", "col.",
-        "capt.", "lt.", "sgt.", "mt.", "ft.", "mr", "mrs", "ms", "dr", "vs", "approx.", "min.", "max.", "avg.", "ref.", "refs.", "tel.",
+        "capt.", "lt.", "sgt.", "mt.", "ft.", "min.", "max.", "avg.", "ref.", "refs.", "tel.",
     };
 
     private static readonly HashSet<string> TwoCapsExceptions = new(StringComparer.Ordinal)
