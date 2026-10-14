@@ -101,18 +101,54 @@ internal static class Wn
 /// <summary>Reading and writing part XML, and small XML helpers shared by the reader and the writer.</summary>
 internal static class DocxXml
 {
+    /// <summary>Deeper XML than this is refused: real documents stay far below it, and processing recurses on depth.</summary>
+    public const int MaxDepth = 512;
+
     private static readonly XmlReaderSettings ReaderSettings = new()
     {
         DtdProcessing = DtdProcessing.Ignore,
         XmlResolver = null,
         CheckCharacters = false,
         IgnoreProcessingInstructions = false,
+        // A part this large is a decompression bomb, not a document (Word itself stops far earlier).
+        MaxCharactersInDocument = 256L * 1024 * 1024,
     };
 
     public static XDocument Load(Stream stream)
     {
         using var reader = XmlReader.Create(stream, ReaderSettings);
-        return XDocument.Load(reader, LoadOptions.PreserveWhitespace);
+        var doc = XDocument.Load(reader, LoadOptions.PreserveWhitespace);
+        if (doc.Root != null && TooDeep(doc.Root, MaxDepth))
+            throw new XmlException("The XML is nested more than " + MaxDepth + " levels deep.");
+        return doc;
+    }
+
+    /// <summary>True if elements nest deeper than <paramref name="limit"/> (an iterative walk without allocations).</summary>
+    public static bool TooDeep(XElement root, int limit)
+    {
+        var current = root;
+        var next = root.FirstNode;
+        var depth = 1;
+        while (true)
+        {
+            if (next == null)
+            {
+                if (ReferenceEquals(current, root)) return false;
+                next = current.NextNode;
+                current = current.Parent!;
+                depth--;
+            }
+            else if (next is XElement child)
+            {
+                if (++depth > limit) return true;
+                current = child;
+                next = child.FirstNode;
+            }
+            else
+            {
+                next = next.NextNode;
+            }
+        }
     }
 
     public static XDocument Load(OpenXmlPart part)

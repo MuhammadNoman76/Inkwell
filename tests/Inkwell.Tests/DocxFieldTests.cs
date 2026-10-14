@@ -156,6 +156,23 @@ public class DocxFieldTests
     }
 
     [Fact]
+    public void EmptyFieldBlock_IsWrittenAsOneParagraphHoldingTheWholeField()
+    {
+        var doc = new Document();
+        doc.Body.Blocks.Add(new FieldBlock { Code = " INDEX \\c \"2\" ", Dirty = true });
+        doc.Body.Blocks.Add(new Paragraph("After"));
+        var bytes = Docx.Save(doc);
+        Docx.AssertValid(bytes);
+        var first = Docx.Body(bytes).Elements(W + "p").First();
+        Assert.Equal(new[] { "begin", "separate", "end" }, first.Descendants(W + "fldChar").Select(e => (string?)e.Attribute(W + "fldCharType")).ToArray());
+        Assert.Contains("INDEX", first.Descendants(W + "instrText").Single().Value);
+        var back = Docx.Load(bytes);
+        var field = Assert.IsType<FieldInline>(((Paragraph)back.Body.Blocks[0]).Inlines.Single());
+        Assert.Equal(FieldKind.Index, field.Kind);
+        Assert.True(field.Dirty);
+    }
+
+    [Fact]
     public void FieldSpanningParagraphs_OutsideAContentControl_IsAFieldBlock()
     {
         var original = TestDocx.Create(

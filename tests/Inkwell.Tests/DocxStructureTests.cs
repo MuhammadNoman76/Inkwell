@@ -337,6 +337,30 @@ public class DocxStructureTests
     }
 
     [Fact]
+    public void SettingsFromWord_KeepTheirOrder_WhenInkwellAddsToThem()
+    {
+        var original = TestDocx.Create(TestDocx.P("x"), (_, main) =>
+        {
+            var settings = main.AddNewPart<DocumentFormat.OpenXml.Packaging.DocumentSettingsPart>("rIdSettings");
+            TestDocx.Write(settings, "<w:settings " + TestDocx.Declarations + " xmlns:sl=\"http://schemas.openxmlformats.org/schemaLibrary/2006/main\">" +
+                                     "<w:zoom w:percent=\"100\"/><w:defaultTabStop w:val=\"720\"/><w:characterSpacingControl w:val=\"doNotCompress\"/>" +
+                                     "<w:compat><w:compatSetting w:name=\"compatibilityMode\" w:uri=\"http://schemas.microsoft.com/office/word\" w:val=\"15\"/></w:compat>" +
+                                     "<w:themeFontLang w:val=\"en-US\"/><sl:schemaLibrary/><w:shapeDefaults/><w:decimalSymbol w:val=\".\"/><w:listSeparator w:val=\",\"/>" +
+                                     "<w15:docId w15:val=\"{11111111-2222-3333-4444-555555555555}\"/></w:settings>");
+        });
+        var doc = Docx.Load(original);
+        var note = new Note(NoteKind.Footnote) { Id = 1 };
+        note.Blocks.Add(new Paragraph("Note"));
+        doc.Footnotes[1] = note;
+        ((Paragraph)doc.Body.Blocks[0]).Inlines.Add(new NoteReference { Kind = NoteKind.Footnote, Id = 1 });
+        var saved = Docx.Save(doc);
+        Docx.AssertValid(saved);
+        var names = Docx.PartXml(saved, "word/settings.xml").Root!.Elements().Select(e => e.Name.LocalName).ToList();
+        Assert.True(names.IndexOf("schemaLibrary") < names.IndexOf("shapeDefaults"));
+        Assert.True(names.IndexOf("footnotePr") < names.IndexOf("compat"));
+    }
+
+    [Fact]
     public void Comments_WithRepliesAndResolvedState_RoundTrip()
     {
         var doc = new Document();

@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Xml.Linq;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
@@ -222,6 +221,12 @@ internal sealed partial class DocxWriteSession
             {
                 _pkg = pkg;
                 _main = pkg.MainDocumentPart ?? pkg.AddMainDocumentPart();
+                if (pkg.DigitalSignatureOriginPart is { } signatures)
+                {
+                    // A changed document invalidates its signatures; Word removes them on save too.
+                    pkg.DeletePart(signatures);
+                    Warn("The document's digital signatures were removed, because the saved document is no longer the signed one.");
+                }
                 SetDocumentType();
                 IndexParts();
                 PrepareHeaderFooterParts();
@@ -710,7 +715,6 @@ internal sealed partial class DocxWriteSession
             SchemaOrder.Sort(pr, NotePrOrder);
         }
         if (_fontsEmbedded) settings.EmbedTrueTypeFonts = true;
-        if (copy.Root != null) SchemaOrder.Sort(copy.Root, SchemaOrder.Settings);
         SaveOwned(copy, MainPart(_main.DocumentSettingsPart));
     }
 
@@ -829,6 +833,4 @@ internal sealed partial class DocxWriteSession
         if (xml.Root != null) DocxFixups.Sanitize(xml.Root);
         DocxXml.Save(xml, part);
     }
-
-    private static string Str(long v) => v.ToString(CultureInfo.InvariantCulture);
 }

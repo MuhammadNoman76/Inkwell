@@ -165,6 +165,8 @@ internal sealed partial class DocxReadSession
             ReadCoreProperties(pkg);
             ReadCustomXml(main);
             NotePackageFeatures(main);
+            if (pkg.DigitalSignatureOriginPart != null)
+                Warn("This document is digitally signed. Saving it from Inkwell removes the signatures, as any change makes them invalid.");
         }
 
         FinishNotices();

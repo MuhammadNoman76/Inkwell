@@ -147,6 +147,26 @@ public class DocxRobustnessTests
     }
 
     [Fact]
+    public void AbsurdlyDeepNesting_IsRefusedInsteadOfOverflowingTheStack()
+    {
+        var sb = new StringBuilder("<w:p>");
+        for (var i = 0; i < 20000; i++) sb.Append("<w:hyperlink>");
+        sb.Append("<w:r><w:t>deep</w:t></w:r>");
+        for (var i = 0; i < 20000; i++) sb.Append("</w:hyperlink>");
+        sb.Append("</w:p>");
+        Assert.Equal(DocxErrorKind.Damaged, Fails(TestDocx.Create(sb.ToString())).Kind);
+
+        // Deep but reasonable nesting (tables in tables) is fine.
+        var nested = new StringBuilder();
+        for (var i = 0; i < 30; i++) nested.Append("<w:tbl><w:tblPr/><w:tblGrid><w:gridCol w:w=\"1000\"/></w:tblGrid><w:tr><w:tc>");
+        nested.Append("<w:p><w:r><w:t>core</w:t></w:r></w:p>");
+        for (var i = 0; i < 30; i++) nested.Append("</w:tc></w:tr></w:tbl><w:p/>");
+        var doc = Docx.Load(TestDocx.Create(nested.ToString()));
+        Assert.Contains("core", Docx.Text(doc));
+        Docx.AssertValid(Docx.Save(doc));
+    }
+
+    [Fact]
     public void PackageWithOnlyTheMainPart_OpensAndSavesComplete()
     {
         var bytes = TestDocx.Create(TestDocx.P("Bare"), styles: false);
@@ -202,6 +222,25 @@ public class DocxRobustnessTests
         Docx.AssertValid(saved);
         Assert.DoesNotContain("purl.oclc.org", Encoding.UTF8.GetString(Docx.PartBytes(saved, "word/document.xml")!));
         Assert.Equal("Strict link", Docx.Text(Docx.Load(saved)));
+    }
+
+    [Fact]
+    public void DigitallySignedDocument_WarnsAndLosesItsSignaturesOnSave()
+    {
+        var bytes = TestDocx.Create(TestDocx.P("Signed"), (pkg, _) =>
+        {
+            var origin = pkg.AddDigitalSignatureOriginPart();
+            var signature = origin.AddNewPart<XmlSignaturePart>("rIdSig");
+            TestDocx.Write(signature, "<Signature xmlns=\"http://www.w3.org/2000/09/xmldsig#\"/>");
+        });
+        Assert.Contains(Docx.PartNames(bytes), n => n.StartsWith("_xmlsignatures/", StringComparison.Ordinal));
+        var doc = Docx.Load(bytes);
+        Assert.Contains(doc.Warnings, w => w.Contains("signed"));
+        var options = new DocxSaveOptions();
+        var saved = Docx.Save(doc, options);
+        Docx.AssertValid(saved);
+        Assert.DoesNotContain(Docx.PartNames(saved), n => n.StartsWith("_xmlsignatures/", StringComparison.Ordinal));
+        Assert.Single(options.Warnings);
     }
 
     [Fact]
