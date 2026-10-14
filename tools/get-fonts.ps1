@@ -113,7 +113,7 @@ $families = @(
 )
 
 $weightNames = @{ 400 = "Regular"; 500 = "Medium"; 600 = "SemiBold"; 700 = "Bold"; 800 = "ExtraBold" }
-# Latin fonts: A Z a z 0 9 & é € —
+# Latin fonts: A Z a z 0 9 & e-acute, euro sign, em dash
 $latinChars = 0x41, 0x5A, 0x61, 0x7A, 0x30, 0x39, 0x26, 0xE9, 0x20AC, 0x2014
 # Arabic / Urdu fonts: alef, beh, farsi yeh, yeh barree, tteh, heh doachashmee, lam, Arabic comma, Arabic-Indic digit zero
 $arabicChars = 0x0627, 0x0628, 0x06CC, 0x06D2, 0x0679, 0x06BE, 0x0644, 0x060C, 0x0660
@@ -189,7 +189,7 @@ foreach ($f in $families) {
             if ($null -eq $shaped) { throw "$file : Arabic text was drawn with a fallback font" }
             $isolated = [int]$map[[int][char]$beh]
             if (@($shaped | Where-Object { $_ -ne $isolated }).Count -eq 0) { throw "$file : Arabic letters don't join (only isolated forms)" }
-            $urdu = [string][char]0x067E + [char]0x0627 + [char]0x06A9 + [char]0x0633 + [char]0x062A + [char]0x0627 + [char]0x0646   # پاکستان
+            $urdu = [string][char]0x067E + [char]0x0627 + [char]0x06A9 + [char]0x0633 + [char]0x062A + [char]0x0627 + [char]0x0646   # "Pakistan" in Urdu
             if ($null -eq [InkwellShapeProbe]::Shape($typeface, $probeUri, $urdu, "ur-PK")) { throw "$file : Urdu text needs a fallback font" }
         }
         foreach ($n in $gt.Win32FamilyNames.Values) { [void]$win32Names.Add($n) }
