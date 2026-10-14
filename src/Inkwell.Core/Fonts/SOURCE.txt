@@ -1,5 +1,18 @@
-Stagecraft bundled fonts - downloaded by tools\get-fonts.ps1 on 2026-10-14
+Inkwell bundled fonts - downloaded by tools\get-fonts.ps1 on 2026-10-15
 All fonts: SIL Open Font License 1.1 (see OFL-*.txt). Files are unmodified.
+
+Literata
+  Literata-Italic.ttf  1241 glyphs  sha256 bad55524c5f792c2796e2e62f2edd100506cd108b2456c34dea7afa4f297ab88
+    https://fonts.gstatic.com/s/literata/v40/or3NQ6P12-iJxAIgLYT1PLs1Zd0nfUwAbeGVKoRYzNiCp1OUedn8_7XWSQ.ttf
+  Literata-BoldItalic.ttf  1253 glyphs  sha256 72233aa2728bbb5937781bf69b0afeaa1e8d38d73ae0a10080cbc921675f7551
+    https://fonts.gstatic.com/s/literata/v40/or3NQ6P12-iJxAIgLYT1PLs1Zd0nfUwAbeGVKoRYzNiCp1OUedn8GLLWSQ.ttf
+  Literata-Regular.ttf  1242 glyphs  sha256 1d6eafdc620333fcc3d573c115fc62ea78d0965d1f72a8f549fc9660fef556b3
+    https://fonts.gstatic.com/s/literata/v40/or3PQ6P12-iJxAIgLa78DkrbXsDgk0oVDaDPYLanFLHpPf2TbBG_F_Y.ttf
+  Literata-SemiBold.ttf  1242 glyphs  sha256 1bc8575bc9f4b7ed93f594924f6639e58d78dbc9bc10491414c4684f69264b92
+    https://fonts.gstatic.com/s/literata/v40/or3PQ6P12-iJxAIgLa78DkrbXsDgk0oVDaDPYLanFLHpPf2TbM-4F_Y.ttf
+  Literata-Bold.ttf  1255 glyphs  sha256 752bd45b08e48848cd2bd30c969f1ad52742c6a519665cedabf3cf29164823ac
+    https://fonts.gstatic.com/s/literata/v40/or3PQ6P12-iJxAIgLa78DkrbXsDgk0oVDaDPYLanFLHpPf2TbPa4F_Y.ttf
+  licence: https://raw.githubusercontent.com/google/fonts/main/ofl/literata/OFL.txt
 
 Inter
   Inter-Italic.ttf  2835 glyphs  sha256 ef8f755d933b9310804cc9152f1f18cb2ac460d6b05054ec913d889c9f11f79e
@@ -72,6 +85,8 @@ DM Serif Display
 Source Serif 4
   SourceSerif4-Italic.ttf  1031 glyphs  sha256 eb04ae6974781ab7145f7ea57838bf0248b6fc0280a5a5e803c1b56f687e7621
     https://fonts.gstatic.com/s/sourceserif4/v15/vEF02_tTDB4M7-auWDN0ahZJW1ge6NmXpVAHV83Bfb_US2D2QYxoUKIkn98pRl9dCw.ttf
+  SourceSerif4-BoldItalic.ttf  1031 glyphs  sha256 c1ad73c368fd9ae22df53fbd75ee3b81d9900885a607491586fe182584b03a13
+    https://fonts.gstatic.com/s/sourceserif4/v15/vEF02_tTDB4M7-auWDN0ahZJW1ge6NmXpVAHV83Bfb_US2D2QYxoUKIkn98poVhdCw.ttf
   SourceSerif4-Regular.ttf  1035 glyphs  sha256 f01900495012279f1e95d721c59363395eeffb79ef806eaa4dfa8bd923ccec0b
     https://fonts.gstatic.com/s/sourceserif4/v15/vEFy2_tTDB4M7-auWDN0ahZJW3IX2ih5nk3AucvUHf6OAVIJmeUDygwjihdqrhw.ttf
   SourceSerif4-SemiBold.ttf  1035 glyphs  sha256 0b03b227d7edf5addbf0094b88c3aa1d66d9448b2b501ed686eb4818b691c247
@@ -88,4 +103,18 @@ JetBrains Mono
   JetBrainsMono-Bold.ttf  1167 glyphs  sha256 a1d92abc6b02a87faed23d98067ab1027e8e95242fd7c9978a072ea383b89d1a
     https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbY2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8L6tjPQ.ttf
   licence: https://raw.githubusercontent.com/google/fonts/main/ofl/jetbrainsmono/OFL.txt
+
+Noto Naskh Arabic
+  NotoNaskhArabic-Regular.ttf  1712 glyphs  sha256 e62e84cf72fe9e8953a21c3337c68155a116d4bbdcd9522d860d46686b28c6e0
+    https://fonts.gstatic.com/s/notonaskharabic/v44/RrQ5bpV-9Dd1b1OAGA6M9PkyDuVBePeKNaxcsss0Y7bwvc5krA.ttf
+  NotoNaskhArabic-Bold.ttf  1712 glyphs  sha256 76e7b3b17abc5068fda755d657d475863df2d48cee60dc21bd22efb11ecb2268
+    https://fonts.gstatic.com/s/notonaskharabic/v44/RrQ5bpV-9Dd1b1OAGA6M9PkyDuVBePeKNaxcsss0Y7bwWslkrA.ttf
+  licence: https://raw.githubusercontent.com/google/fonts/main/ofl/notonaskharabic/OFL.txt
+
+Noto Nastaliq Urdu
+  NotoNastaliqUrdu-Regular.ttf  1696 glyphs  sha256 b6f46e3874b4b72b46aaf6a7cbf57b38664755caafd0824f1172743df3b232cb
+    https://fonts.gstatic.com/s/notonastaliqurdu/v23/LhWNMUPbN-oZdNFcBy1-DJYsEoTq5pudQ9L940pGPkB3Qt_-DK0.ttf
+  NotoNastaliqUrdu-Bold.ttf  1696 glyphs  sha256 436c780c80bebadeda9076051dfe5827a73c564a91326454916bd25d53fd95a1
+    https://fonts.gstatic.com/s/notonastaliqurdu/v23/LhWNMUPbN-oZdNFcBy1-DJYsEoTq5pudQ9L940pGPkB3Qjj5DK0.ttf
+  licence: https://raw.githubusercontent.com/google/fonts/main/ofl/notonastaliqurdu/OFL.txt
 

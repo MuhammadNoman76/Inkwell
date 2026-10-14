@@ -1,0 +1,71 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!--
+        Inkwell's mark: a fountain-pen nib with a drop of ink falling from its tip, on an ink-blue-to-teal tile
+        (256 x 256 design grid); the nib's breather hole is drop-shaped too.
+        tools\make-icon.ps1 renders Inkwell.ico, InkwellDoc.ico and docs\icon.png from these drawings.
+        Logo.Small is a bolder version for 16-24 px: a bigger nib, a bigger hole, no drop.
+    -->
+    <DrawingImage x:Key="Logo.Mark">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <!-- invisible frame keeps the 256 x 256 bounds -->
+                <GeometryDrawing Brush="#00000000" Geometry="M 0,0 H 256 V 256 H 0 Z" />
+                <!-- tile -->
+                <GeometryDrawing Geometry="M 64,10 H 192 C 222,10 246,34 246,64 V 192 C 246,222 222,246 192,246 H 64 C 34,246 10,222 10,192 V 64 C 10,34 34,10 64,10 Z">
+                    <GeometryDrawing.Brush>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#1E2A78" Offset="0" />
+                            <GradientStop Color="#2152AB" Offset="0.5" />
+                            <GradientStop Color="#0FA59B" Offset="1" />
+                        </LinearGradientBrush>
+                    </GeometryDrawing.Brush>
+                </GeometryDrawing>
+                <!-- soft light from the top left -->
+                <GeometryDrawing Geometry="M 64,10 H 192 C 222,10 246,34 246,64 V 192 C 246,222 222,246 192,246 H 64 C 34,246 10,222 10,192 V 64 C 10,34 34,10 64,10 Z">
+                    <GeometryDrawing.Brush>
+                        <RadialGradientBrush Center="0.25,0.1" GradientOrigin="0.25,0.1" RadiusX="0.8" RadiusY="0.7">
+                            <GradientStop Color="#2EFFFFFF" Offset="0" />
+                            <GradientStop Color="#00FFFFFF" Offset="1" />
+                        </RadialGradientBrush>
+                    </GeometryDrawing.Brush>
+                </GeometryDrawing>
+                <!-- drop of ink -->
+                <GeometryDrawing Brush="#A6F4EA" Geometry="M 68,182 C 72.1,192.1 83,200.5 83,210 C 83,218.3 76.3,225 68,225 C 59.7,225 53,218.3 53,210 C 53,200.5 64,192.1 68,182 Z" />
+                <!-- nib, with the ink-drop breather hole and the slit cut out -->
+                <GeometryDrawing Brush="#FFFFFF">
+                    <GeometryDrawing.Geometry>
+                        <CombinedGeometry GeometryCombineMode="Exclude"
+                                          Geometry1="M 169,31.5 L 206.5,69 C 211.5,74.1 211.5,82 206.8,87.4 L 173.3,133.9 C 165.7,143.7 154.5,149.8 141.6,152.7 L 74.9,171.1 C 69.8,172.5 65.5,168.2 66.9,163.1 L 85.3,96.4 C 88.2,83.5 94.3,72.3 104.1,64.7 L 150.6,31.2 C 156,26.5 163.9,26.5 169,31.5 Z"
+                                          Geometry2="F1 M 154.5,83.5 C 148.6,95.2 149.2,110.5 140.8,118.8 C 134.9,124.8 125.2,124.8 119.2,118.8 C 113.2,112.8 113.2,103.1 119.2,97.2 C 127.5,88.8 142.8,89.4 154.5,83.5 Z M 125.5,109.2 L 128.8,112.5 L 64.4,175 L 63,173.6 Z" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <DrawingImage x:Key="Logo.Small">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Brush="#00000000" Geometry="M 0,0 H 256 V 256 H 0 Z" />
+                <GeometryDrawing Geometry="M 56,4 H 200 C 229,4 252,27 252,56 V 200 C 252,229 229,252 200,252 H 56 C 27,252 4,229 4,200 V 56 C 4,27 27,4 56,4 Z">
+                    <GeometryDrawing.Brush>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#1E2A78" Offset="0" />
+                            <GradientStop Color="#2152AB" Offset="0.5" />
+                            <GradientStop Color="#0FA59B" Offset="1" />
+                        </LinearGradientBrush>
+                    </GeometryDrawing.Brush>
+                </GeometryDrawing>
+                <!-- nib -->
+                <GeometryDrawing Brush="#FFFFFF">
+                    <GeometryDrawing.Geometry>
+                        <CombinedGeometry GeometryCombineMode="Exclude"
+                                          Geometry1="M 167.7,40.5 L 215.5,88.3 C 221.9,94.7 221.9,104.9 216,111.7 L 173.2,171 C 163.6,183.4 149.3,191.3 132.8,194.9 L 47.7,218.4 C 41.3,220.2 35.8,214.7 37.6,208.3 L 61.1,123.2 C 64.7,106.7 72.6,92.4 85,82.8 L 144.3,40 C 151.1,34.1 161.3,34.1 167.7,40.5 Z"
+                                          Geometry2="F1 M 160.3,95.7 C 150.6,116.3 152.7,143.8 138.3,158.2 C 127.1,169.3 109,169.3 97.8,158.2 C 86.7,147 86.7,128.9 97.8,117.7 C 112.2,103.3 139.7,105.4 160.3,95.7 Z M 109.8,137 L 119,146.2 L 36.2,225.3 L 30.7,219.8 Z" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+</ResourceDictionary>
