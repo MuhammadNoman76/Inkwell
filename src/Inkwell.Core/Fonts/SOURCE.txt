@@ -1,0 +1,91 @@
+Stagecraft bundled fonts - downloaded by tools\get-fonts.ps1 on 2026-10-14
+All fonts: SIL Open Font License 1.1 (see OFL-*.txt). Files are unmodified.
+
+Inter
+  Inter-Italic.ttf  2835 glyphs  sha256 ef8f755d933b9310804cc9152f1f18cb2ac460d6b05054ec913d889c9f11f79e
+    https://fonts.gstatic.com/s/inter/v20/UcCM3FwrK3iLTcvneQg7Ca725JhhKnNqk4j1ebLhAm8SrXTc2dthjQ.ttf
+  Inter-Regular.ttf  2871 glyphs  sha256 1b08e7fc267a5c7e1d614100f604b83e7e8a0be241f0f288faa2b3ac93a683ba
+    https://fonts.gstatic.com/s/inter/v20/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuLyfMZg.ttf
+  Inter-Medium.ttf  2871 glyphs  sha256 8c883f63b2c4157d997319f2c8bc6995ed4357ef371940d31ca159004a4aae63
+    https://fonts.gstatic.com/s/inter/v20/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuI6fMZg.ttf
+  Inter-SemiBold.ttf  2871 glyphs  sha256 e7a1aaf7eda9f2fad4131725fa556265ec75ca7b2d756260173a040363e8d4f7
+    https://fonts.gstatic.com/s/inter/v20/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuGKYMZg.ttf
+  Inter-Bold.ttf  2871 glyphs  sha256 b37284b5701b6b168dfc770aa1a4ac492106422fd3ba76bc7641e37434e8019c
+    https://fonts.gstatic.com/s/inter/v20/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuFuYMZg.ttf
+  Inter-ExtraBold.ttf  2871 glyphs  sha256 eec66af7f2337bd34fe6e801cf92ededcb57a20c0d7bc40a61d4eefcbe3dd40c
+    https://fonts.gstatic.com/s/inter/v20/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuDyYMZg.ttf
+  licence: https://raw.githubusercontent.com/google/fonts/main/ofl/inter/OFL.txt
+
+Plus Jakarta Sans
+  PlusJakartaSans-Italic.ttf  782 glyphs  sha256 3a658a0234119d94a50063e72fc8c925e2d4cf64a525854171a32643828b21ec
+    https://fonts.gstatic.com/s/plusjakartasans/v12/LDIZaomQNQcsA88c7O9yZ4KMCoOg4KozySKCdSNG9OcqYQ0lCR_Q.ttf
+  PlusJakartaSans-Regular.ttf  781 glyphs  sha256 076831b98043f50f829b6c91db3be4a844641f1c95bccff5c886ed87c661a852
+    https://fonts.gstatic.com/s/plusjakartasans/v12/LDIbaomQNQcsA88c7O9yZ4KMCoOg4IA6-91aHEjcWuA_qU7NSg.ttf
+  PlusJakartaSans-Medium.ttf  781 glyphs  sha256 b4fc14ec283d54236fd302cdb92546f98ae0ff061ca5ee23453a02bdf4628791
+    https://fonts.gstatic.com/s/plusjakartasans/v12/LDIbaomQNQcsA88c7O9yZ4KMCoOg4IA6-91aHEjcWuA_m07NSg.ttf
+  PlusJakartaSans-SemiBold.ttf  781 glyphs  sha256 50357df108c5d297ec4ece76aeddf49561f3794f67af077cfc2c711b7a75b439
+    https://fonts.gstatic.com/s/plusjakartasans/v12/LDIbaomQNQcsA88c7O9yZ4KMCoOg4IA6-91aHEjcWuA_d0nNSg.ttf
+  PlusJakartaSans-Bold.ttf  781 glyphs  sha256 32971ad7976930539a11c79ce91ce84092df7f25c5be716b594601842f10a7ae
+    https://fonts.gstatic.com/s/plusjakartasans/v12/LDIbaomQNQcsA88c7O9yZ4KMCoOg4IA6-91aHEjcWuA_TknNSg.ttf
+  PlusJakartaSans-ExtraBold.ttf  781 glyphs  sha256 d9e0ddb4a15a0054ad84b4ded3b4b9f354a0b7df426e21a1363d6933728da9d5
+    https://fonts.gstatic.com/s/plusjakartasans/v12/LDIbaomQNQcsA88c7O9yZ4KMCoOg4IA6-91aHEjcWuA_KUnNSg.ttf
+  licence: https://raw.githubusercontent.com/google/fonts/main/ofl/plusjakartasans/OFL.txt
+
+DM Sans
+  DMSans-Italic.ttf  426 glyphs  sha256 cb30796ef338a70498e301f2c333f00d4fc23bacfa267be09673fdac43356a96
+    https://fonts.gstatic.com/s/dmsans/v17/rP2rp2ywxg089UriCZaSExd86J3t9jz86Mvy4qCRAL19DksVat-JDW3z.ttf
+  DMSans-Regular.ttf  439 glyphs  sha256 b0ae3e89a7d3ef2b1838bb4b1ceb0b17cc3435af061eee809d76aa623ff116e9
+    https://fonts.gstatic.com/s/dmsans/v17/rP2tp2ywxg089UriI5-g4vlH9VoD8CmcqZG40F9JadbnoEwAopxhTg.ttf
+  DMSans-Medium.ttf  439 glyphs  sha256 376427b5322148d8de1e03f263bcca4935a2d60ba71d9f94f4947ab664c711ae
+    https://fonts.gstatic.com/s/dmsans/v17/rP2tp2ywxg089UriI5-g4vlH9VoD8CmcqZG40F9JadbnoEwAkJxhTg.ttf
+  DMSans-Bold.ttf  439 glyphs  sha256 2a8e7f713ee79fbccdef3cef5c787aff47580299f7da60144961e7db2ec08211
+    https://fonts.gstatic.com/s/dmsans/v17/rP2tp2ywxg089UriI5-g4vlH9VoD8CmcqZG40F9JadbnoEwARZthTg.ttf
+  licence: https://raw.githubusercontent.com/google/fonts/main/ofl/dmsans/OFL.txt
+
+Space Grotesk
+  SpaceGrotesk-Regular.ttf  818 glyphs  sha256 ec926d5065eaca49a48f96e312bbae0bbc5733c24215cf5dfabbdccee926fef7
+    https://fonts.gstatic.com/s/spacegrotesk/v22/V8mQoQDjQSkFtoMM3T6r8E7mF71Q-gOoraIAEj7oUUsj.ttf
+  SpaceGrotesk-Medium.ttf  818 glyphs  sha256 3e699ead1876244fa392243054ddefe7cf631b488438828a8a100731a22ab995
+    https://fonts.gstatic.com/s/spacegrotesk/v22/V8mQoQDjQSkFtoMM3T6r8E7mF71Q-gOoraIAEj7aUUsj.ttf
+  SpaceGrotesk-Bold.ttf  818 glyphs  sha256 3e756954468ff1cb302dae0414262e72f76a67d87bef3fa1f3226cd0fb9b2d85
+    https://fonts.gstatic.com/s/spacegrotesk/v22/V8mQoQDjQSkFtoMM3T6r8E7mF71Q-gOoraIAEj4PVksj.ttf
+  licence: https://raw.githubusercontent.com/google/fonts/main/ofl/spacegrotesk/OFL.txt
+
+Playfair Display
+  PlayfairDisplay-Italic.ttf  749 glyphs  sha256 6021680663c58b344d8404c289c755aadc662a02189ffe4f5ca79378f9e97840
+    https://fonts.gstatic.com/s/playfairdisplay/v40/nuFRD-vYSZviVYUb_rj3ij__anPXDTnCjmHKM4nYO7KN_qiTbtY.ttf
+  PlayfairDisplay-BoldItalic.ttf  749 glyphs  sha256 954e20ee10ae685d0a5a6e6ee380165ea9c8eb329c0e22a58739496714f66991
+    https://fonts.gstatic.com/s/playfairdisplay/v40/nuFRD-vYSZviVYUb_rj3ij__anPXDTnCjmHKM4nYO7KN_k-UbtY.ttf
+  PlayfairDisplay-Regular.ttf  756 glyphs  sha256 1609a54fa3ad1abc8d0037132f73700333241ea0b65672079998e352f151dea7
+    https://fonts.gstatic.com/s/playfairdisplay/v40/nuFvD-vYSZviVYUb_rj3ij__anPXJzDwcbmjWBN2PKdFvUDQ.ttf
+  PlayfairDisplay-Bold.ttf  756 glyphs  sha256 adefc53e7b3d483f1fa5e85edd82b7689ca79db25a1f6786bd7949cdcfeec601
+    https://fonts.gstatic.com/s/playfairdisplay/v40/nuFvD-vYSZviVYUb_rj3ij__anPXJzDwcbmjWBN2PKeiukDQ.ttf
+  licence: https://raw.githubusercontent.com/google/fonts/main/ofl/playfairdisplay/OFL.txt
+
+DM Serif Display
+  DMSerifDisplay-Italic.ttf  351 glyphs  sha256 0ab2fcacedaafc0a7536453d4a763f131ba83a636706d3ec2d685cf04478a920
+    https://fonts.gstatic.com/s/dmserifdisplay/v17/-nFhOHM81r4j6k0gjAW3mujVU2B2G_Vx1w.ttf
+  DMSerifDisplay-Regular.ttf  351 glyphs  sha256 c03775f8cc3db88cfea259b231abe13f94e6a3d3cb01c09477a2e42a1f5919e1
+    https://fonts.gstatic.com/s/dmserifdisplay/v17/-nFnOHM81r4j6k0gjAW3mujVU2B2K_c.ttf
+  licence: https://raw.githubusercontent.com/google/fonts/main/ofl/dmserifdisplay/OFL.txt
+
+Source Serif 4
+  SourceSerif4-Italic.ttf  1031 glyphs  sha256 eb04ae6974781ab7145f7ea57838bf0248b6fc0280a5a5e803c1b56f687e7621
+    https://fonts.gstatic.com/s/sourceserif4/v15/vEF02_tTDB4M7-auWDN0ahZJW1ge6NmXpVAHV83Bfb_US2D2QYxoUKIkn98pRl9dCw.ttf
+  SourceSerif4-Regular.ttf  1035 glyphs  sha256 f01900495012279f1e95d721c59363395eeffb79ef806eaa4dfa8bd923ccec0b
+    https://fonts.gstatic.com/s/sourceserif4/v15/vEFy2_tTDB4M7-auWDN0ahZJW3IX2ih5nk3AucvUHf6OAVIJmeUDygwjihdqrhw.ttf
+  SourceSerif4-SemiBold.ttf  1035 glyphs  sha256 0b03b227d7edf5addbf0094b88c3aa1d66d9448b2b501ed686eb4818b691c247
+    https://fonts.gstatic.com/s/sourceserif4/v15/vEFy2_tTDB4M7-auWDN0ahZJW3IX2ih5nk3AucvUHf6OAVIJmeUDygwjisltrhw.ttf
+  SourceSerif4-Bold.ttf  1035 glyphs  sha256 0efc0b44578e439999fc8654670925d7abc22d17b557588487acd673ff07c068
+    https://fonts.gstatic.com/s/sourceserif4/v15/vEFy2_tTDB4M7-auWDN0ahZJW3IX2ih5nk3AucvUHf6OAVIJmeUDygwjivBtrhw.ttf
+  licence: https://raw.githubusercontent.com/google/fonts/main/ofl/sourceserif4/OFL.txt
+
+JetBrains Mono
+  JetBrainsMono-Regular.ttf  1167 glyphs  sha256 44ce4a84f20d60f24539bd0cef11f79c29e38609e0f8adf18551c9794a5d9dc3
+    https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbY2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKxjPQ.ttf
+  JetBrainsMono-Medium.ttf  1167 glyphs  sha256 3386a05f6ece969e4537de6be894170d20558e82f7d56c8c5d332972ef172160
+    https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbY2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8-qxjPQ.ttf
+  JetBrainsMono-Bold.ttf  1167 glyphs  sha256 a1d92abc6b02a87faed23d98067ab1027e8e95242fd7c9978a072ea383b89d1a
+    https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbY2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8L6tjPQ.ttf
+  licence: https://raw.githubusercontent.com/google/fonts/main/ofl/jetbrainsmono/OFL.txt
+
