@@ -180,10 +180,27 @@ internal sealed partial class DocxWriteSession
     private static XElement ParaPropsCopy(ParaProps props)
     {
         var copy = new XElement(props.X);
-        SchemaOrder.Sort(copy, SchemaOrder.ParaProps);
+        SortIfNeeded(copy, SchemaOrder.ParaProps);
         var rPr = copy.Element(Wn.RPr);
-        if (rPr != null) SchemaOrder.Sort(rPr, SchemaOrder.RunProps);
+        if (rPr != null) SortIfNeeded(rPr, SchemaOrder.RunProps);
         return copy;
+    }
+
+    /// <summary>Puts children in schema order, only when they aren't already (the common case costs no allocation).</summary>
+    internal static void SortIfNeeded(XElement e, Dictionary<string, int> order)
+    {
+        var last = int.MinValue;
+        for (var node = e.FirstNode; node != null; node = node.NextNode)
+        {
+            if (node is not XElement child) continue;
+            var index = SchemaOrder.IndexOf(order, child.Name);
+            if (index < last)
+            {
+                SchemaOrder.Sort(e, order);
+                return;
+            }
+            last = index;
+        }
     }
 
     /// <summary>A run's properties to write (null when empty); paragraph-mark-only revision elements are dropped.</summary>
@@ -191,9 +208,13 @@ internal sealed partial class DocxWriteSession
     {
         if (props == null || props.IsEmpty) return null;
         var copy = new XElement(props.X);
-        foreach (var name in new[] { "ins", "del", "moveFrom", "moveTo" }) copy.Elements(Ns.W + name).Remove();
-        SchemaOrder.Sort(copy, SchemaOrder.RunProps);
-        return copy.HasElements || copy.HasAttributes ? copy : null;
+        if (copy.Element(Wn.Ins) != null || copy.Element(Wn.Del) != null || copy.Element(Wn.MoveFrom) != null || copy.Element(Wn.MoveTo) != null)
+        {
+            copy.Elements().Where(c => c.Name == Wn.Ins || c.Name == Wn.Del || c.Name == Wn.MoveFrom || c.Name == Wn.MoveTo).Remove();
+            if (!copy.HasElements && !copy.HasAttributes) return null;
+        }
+        SortIfNeeded(copy, SchemaOrder.RunProps);
+        return copy;
     }
 
     private static XElement Run(RunProps? props, params object[] content)
@@ -213,7 +234,7 @@ internal sealed partial class DocxWriteSession
         }
         var el = t.Shell != null ? new XElement(Wn.Tbl, t.Shell.Attributes()) : new XElement(Wn.Tbl);
         var tblPr = new XElement(t.Props.X);
-        SchemaOrder.Sort(tblPr, SchemaOrder.TableProps);
+        SortIfNeeded(tblPr, SchemaOrder.TableProps);
         el.Add(tblPr);
         var grid = t.Grid.Count > 0 ? t.Grid : DeriveGrid(t);
         el.Add(new XElement(Wn.TblGrid, grid.Select(w => new XElement(Wn.GridCol, new XAttribute(Ns.W + "w", Ox.Str(Math.Max(0, w)))))));
@@ -231,7 +252,7 @@ internal sealed partial class DocxWriteSession
             if (!row.Props.IsEmpty)
             {
                 var trPr = new XElement(row.Props.X);
-                SchemaOrder.Sort(trPr, SchemaOrder.RowProps);
+                SortIfNeeded(trPr, SchemaOrder.RowProps);
                 tr.Add(trPr);
             }
             foreach (var cell in row.Cells)
@@ -240,7 +261,7 @@ internal sealed partial class DocxWriteSession
                 if (!cell.Props.IsEmpty)
                 {
                     var tcPr = new XElement(cell.Props.X);
-                    SchemaOrder.Sort(tcPr, SchemaOrder.CellProps);
+                    SortIfNeeded(tcPr, SchemaOrder.CellProps);
                     tc.Add(tcPr);
                 }
                 WriteBlocks(tc, cell.Blocks, pw, true);

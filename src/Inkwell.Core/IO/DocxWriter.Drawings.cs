@@ -335,14 +335,13 @@ internal sealed partial class DocxWriteSession
         return drawing;
     }
 
+    // The converters move (not copy) the shared children, so references into the graphic stay valid.
     private static XElement ConvertToAnchor(XElement inline)
     {
         var anchor = new XElement(Wn.WpAnchor);
         foreach (var a in inline.Attributes())
             if (a.Name.Namespace == Ns.WP14 || a.IsNamespaceDeclaration) anchor.Add(new XAttribute(a));
-        foreach (var name in new[] { "extent", "effectExtent", "docPr", "cNvGraphicFramePr" })
-            if (inline.Element(Ns.WP + name) is { } e) anchor.Add(new XElement(e));
-        if (inline.Element(Ns.A + "graphic") is { } graphic) anchor.Add(new XElement(graphic));
+        MoveFrameChildren(inline, anchor);
         inline.ReplaceWith(anchor);
         return anchor;
     }
@@ -353,11 +352,20 @@ internal sealed partial class DocxWriteSession
             new XAttribute("distT", "0"), new XAttribute("distB", "0"), new XAttribute("distL", "0"), new XAttribute("distR", "0"));
         foreach (var a in anchor.Attributes())
             if (a.Name.Namespace == Ns.WP14 || a.IsNamespaceDeclaration) inline.Add(new XAttribute(a));
-        foreach (var name in new[] { "extent", "effectExtent", "docPr", "cNvGraphicFramePr" })
-            if (anchor.Element(Ns.WP + name) is { } e) inline.Add(new XElement(e));
-        if (anchor.Element(Ns.A + "graphic") is { } graphic) inline.Add(new XElement(graphic));
+        MoveFrameChildren(anchor, inline);
         anchor.ReplaceWith(inline);
         return inline;
+    }
+
+    private static void MoveFrameChildren(XElement from, XElement to)
+    {
+        foreach (var name in new[] { Ns.WP + "extent", Ns.WP + "effectExtent", Wn.WpDocPr, Ns.WP + "cNvGraphicFramePr", Ns.A + "graphic" })
+        {
+            var e = from.Element(name);
+            if (e == null) continue;
+            e.Remove();
+            to.Add(e);
+        }
     }
 
     private static readonly HashSet<string> HorizontalFrom = new(StringComparer.Ordinal)

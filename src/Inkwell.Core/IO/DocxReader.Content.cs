@@ -177,7 +177,9 @@ internal sealed partial class DocxReadSession
             }
             else if (name == Wn.Tbl)
             {
-                raws.Add(new RawBlock(ReadTable(e), e));
+                var table = ReadTable(e);
+                if (table != null) raws.Add(new RawBlock(table, e));
+                else Warn("An empty table (with no rows), which Word can't open, was removed.");
             }
             else if (name == Wn.Sdt)
             {
@@ -297,7 +299,7 @@ internal sealed partial class DocxReadSession
 
     // ------------------------------------------------------------------ tables
 
-    private Block ReadTable(XElement e)
+    private Block? ReadTable(XElement e)
     {
         var structured = HasRowOrCellControls(e);
         if (structured) _displayDepth++;
@@ -320,9 +322,7 @@ internal sealed partial class DocxReadSession
                 Description = "Table with content controls",
             };
         }
-        if (table.Rows.Count == 0)
-            return new OpaqueBlock(new XElement(e), "table") { SourcePart = _part.Uri, Description = "Empty table" };
-        return table;
+        return table.Rows.Count == 0 || table.Rows.All(r => r.Cells.Count == 0) ? null : table;
     }
 
     private static bool HasRowOrCellControls(XElement tbl)
@@ -665,7 +665,8 @@ internal sealed partial class DocxReadSession
                         toks.Add(new Tok(TokKind.Instr, ctx, c) { Text = c.Value });
                         break;
                     case "drawing":
-                        Object(ReadDrawing(c, c));
+                        if (c.Element(Wn.WpInline) != null || c.Element(Wn.WpAnchor) != null) Object(ReadDrawing(c, c));
+                        else Warn("An empty drawing, which Word can't open, was removed.");
                         break;
                     case "pict":
                         Object(ReadPict(c));
@@ -1147,7 +1148,7 @@ internal sealed partial class DocxReadSession
     {
         static bool Empty(XElement? e) => e == null || !e.HasElements && !e.Attributes().Any(x => !x.IsNamespaceDeclaration);
         if (a == null || b == null) return Empty(a) && Empty(b);
-        return Ox.SameXml(a, b);
+        return DocxXml.SameXml(a, b);
     }
 
     /// <summary>Builds a one-paragraph field from its collected parts.</summary>

@@ -186,7 +186,7 @@ internal sealed partial class DocxWriteSession
                 }
                 var key = "{" + Guid.NewGuid().ToString().ToUpperInvariant() + "}";
                 var id = DocxXml.NewRelId(part);
-                var fontPart = part.AddNewPart<FontPart>(DocxFonts.ObfuscatedFontContentType, id);
+                var fontPart = part.AddFontPart(FontPartType.FontOdttf, id);
                 var obfuscated = DocxFonts.Obfuscate(data, key);
                 using (var s = fontPart.GetStream(FileMode.Create, FileAccess.Write)) s.Write(obfuscated, 0, obfuscated.Length);
                 var name = bold && italic ? "embedBoldItalic" : bold ? "embedBold" : italic ? "embedItalic" : "embedRegular";

@@ -152,6 +152,44 @@ internal static class DocxXml
 
     public static void Save(XElement root, OpenXmlPart part) => Save(new XDocument(new XDeclaration("1.0", "UTF-8", "yes"), root), part);
 
+    /// <summary>
+    /// Equal XML (names, attributes in any order, child elements in order, text of leaf elements), like
+    /// <see cref="Ox.SameXml"/> but without allocating: the reader compares the properties of every pair of
+    /// neighbouring runs.
+    /// </summary>
+    public static bool SameXml(XElement a, XElement b)
+    {
+        if (a.Name != b.Name) return false;
+        var countA = 0;
+        for (var x = a.FirstAttribute; x != null; x = x.NextAttribute)
+        {
+            if (x.IsNamespaceDeclaration) continue;
+            countA++;
+            if (b.Attribute(x.Name)?.Value != x.Value) return false;
+        }
+        var countB = 0;
+        for (var x = b.FirstAttribute; x != null; x = x.NextAttribute)
+            if (!x.IsNamespaceDeclaration) countB++;
+        if (countA != countB) return false;
+
+        var ca = NextElement(a.FirstNode);
+        var cb = NextElement(b.FirstNode);
+        if (ca == null && cb == null) return a.Value == b.Value;
+        while (ca != null && cb != null)
+        {
+            if (!SameXml(ca, cb)) return false;
+            ca = NextElement(ca.NextNode);
+            cb = NextElement(cb.NextNode);
+        }
+        return ca == null && cb == null;
+    }
+
+    private static XElement? NextElement(XNode? node)
+    {
+        while (node != null && node is not XElement) node = node.NextNode;
+        return (XElement?)node;
+    }
+
     /// <summary>The element with its attributes (namespace declarations included) but no content.</summary>
     public static XElement Shell(XElement e) => new(e.Name, e.Attributes());
 

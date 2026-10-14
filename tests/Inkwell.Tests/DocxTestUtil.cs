@@ -32,13 +32,17 @@ internal static class Docx
 
     public static Document RoundTrip(Document doc) => RoundTrip(doc, out _);
 
-    /// <summary>Validates the package against the newest schemas the Open XML SDK knows (Microsoft 365).</summary>
-    public static void AssertValid(byte[] bytes)
+    /// <summary>
+    /// Validates the package against the newest schemas the Open XML SDK knows (Microsoft 365).
+    /// <paramref name="ignorePart"/> skips parts a test fabricated itself (a stand-in chart, say): those are only
+    /// checked for being kept byte for byte, never written by Inkwell.
+    /// </summary>
+    public static void AssertValid(byte[] bytes, Func<string, bool>? ignorePart = null)
     {
         using var ms = new MemoryStream(bytes, false);
         using var pkg = WordprocessingDocument.Open(ms, false);
         var validator = new OpenXmlValidator(FileFormatVersions.Microsoft365);
-        var errors = validator.Validate(pkg).ToList();
+        var errors = validator.Validate(pkg).Where(e => ignorePart == null || e.Part == null || !ignorePart(e.Part.Uri.OriginalString)).ToList();
         if (errors.Count == 0) return;
         var message = new StringBuilder("The package isn't valid:\n");
         foreach (var e in errors.Take(25))
@@ -99,6 +103,18 @@ internal static class Docx
     }
 
     public static string Text(Document doc) => string.Join("\n", doc.Body.Paragraphs.Select(p => p.PlainText()));
+
+    /// <summary>Same XML, ignoring xml:space (the writer adds it only where text starts or ends with a space).</summary>
+    public static bool SameXml(XElement a, XElement b)
+    {
+        static XElement Strip(XElement e)
+        {
+            var copy = new XElement(e);
+            foreach (var x in copy.DescendantsAndSelf()) x.Attribute(XNamespace.Xml + "space")?.Remove();
+            return copy;
+        }
+        return Ox.SameXml(Strip(a), Strip(b));
+    }
 
     public static Paragraph Para(string text, string? style = null) => new(text, style);
 }

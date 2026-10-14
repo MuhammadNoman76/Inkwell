@@ -102,8 +102,13 @@ public static class DocxWriter
             using var pkg = WordprocessingDocument.Open(ms, false);
             var main = pkg.MainDocumentPart ?? throw new InvalidDataException("The main document part is missing.");
             using var s = main.GetStream(FileMode.Open, FileAccess.Read);
-            var x = DocxXml.Load(s);
-            if (x.Root?.Name != Wn.Document) throw new InvalidDataException("The main document part isn't a w:document.");
+            // Read the whole part as a stream of nodes: well-formed XML with a w:document root, without building a tree.
+            using var reader = System.Xml.XmlReader.Create(s, new System.Xml.XmlReaderSettings { DtdProcessing = System.Xml.DtdProcessing.Prohibit, XmlResolver = null });
+            reader.MoveToContent();
+            if (reader.LocalName != "document" || reader.NamespaceURI != Ns.W.NamespaceName) throw new InvalidDataException("The main document part isn't a w:document.");
+            while (reader.Read())
+            {
+            }
         }
         catch (Exception ex) when (ex is not OutOfMemoryException and not DocxException)
         {
@@ -241,7 +246,8 @@ internal sealed partial class DocxWriteSession
                 WriteAppProperties();
                 WriteBibliography();
             }
-            return ms.ToArray();
+            var bytes = ms.ToArray();
+            return _retype ? SetMainContentType(bytes, _mainUri, DocxWriter.ContentType(_format)) : bytes;
         }
         catch (DocxException)
         {
@@ -313,11 +319,37 @@ internal sealed partial class DocxWriteSession
             _main.DeletePart(vba);
             if (!_options.DropMacros) Warn("The macros were removed because the chosen format can't hold them. Save as a macro-enabled document (.docm) to keep them.");
         }
-        if (_pkg.DocumentType != target)
+        // The content type is switched in [Content_Types].xml once the package is written: the SDK's
+        // ChangeDocumentType would move the main part to a new name (word/document2.xml).
+        _mainUri = _main.Uri.OriginalString;
+        _retype = !string.Equals(_main.ContentType, DocxWriter.ContentType(_format), StringComparison.Ordinal);
+    }
+
+    private string _mainUri = "/word/document.xml";
+    private bool _retype;
+
+    /// <summary>Sets the main part's content type in [Content_Types].xml (an Override, so other .xml parts are untouched).</summary>
+    private static byte[] SetMainContentType(byte[] bytes, string mainUri, string contentType)
+    {
+        using var ms = new MemoryStream();
+        ms.Write(bytes, 0, bytes.Length);
+        using (var zip = new System.IO.Compression.ZipArchive(ms, System.IO.Compression.ZipArchiveMode.Update, true))
         {
-            _pkg.ChangeDocumentType(target);
-            _main = _pkg.MainDocumentPart!;
+            var entry = zip.Entries.First(e => string.Equals(e.FullName, "[Content_Types].xml", StringComparison.OrdinalIgnoreCase));
+            XDocument types;
+            using (var s = entry.Open()) types = DocxXml.Load(s);
+            var ns = XNamespace.Get("http://schemas.openxmlformats.org/package/2006/content-types");
+            var root = types.Root!;
+            var over = root.Elements(ns + "Override").FirstOrDefault(e => string.Equals(e.Attribute("PartName")?.Value, mainUri, StringComparison.OrdinalIgnoreCase));
+            if (over != null) over.SetAttributeValue("ContentType", contentType);
+            else root.Add(new XElement(ns + "Override", new XAttribute("PartName", mainUri), new XAttribute("ContentType", contentType)));
+            var name = entry.FullName;
+            entry.Delete();
+            var replacement = zip.CreateEntry(name, System.IO.Compression.CompressionLevel.Optimal);
+            using var w = replacement.Open();
+            DocxXml.Save(types, w);
         }
+        return ms.ToArray();
     }
 
     private void IndexParts()
