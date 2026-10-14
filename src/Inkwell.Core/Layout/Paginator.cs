@@ -1185,6 +1185,8 @@ public sealed class Paginator
         if (_separators.TryGetValue(key, out var cached)) return cached;
         var note = _doc.Footnotes.Values.FirstOrDefault(n => n.Type == (continuation ? "continuationSeparator" : "separator"));
         var result = note != null ? _blocks.Stack(note.Blocks, width) : (new List<BlockLayout>(), 12.0);
+        // A little air between the rule and the first note (note numbers are raised).
+        result = (result.Item1, result.Item2 + 4);
         _separators[key] = result;
         return result;
     }

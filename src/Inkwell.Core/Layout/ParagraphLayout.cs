@@ -229,7 +229,10 @@ public sealed class LineFormatter : IDisposable
             };
             info.DocEnd = endBreak == '\r' ? source.DocLength : Math.Max(info.DocStart, source.SrcToDoc(srcStart + line.Length));
             if (srcStart < source.LabelLength) info.DocStart = 0;
-            ApplyLineSpacing(info, line.Height, line.Baseline, p);
+            // Superscripts and subscripts (note numbers, x²) don't make the line taller, as in Word.
+            var (natural, baseline) = CleanMetrics(source, srcStart, line.Length, endBreak == '\r') ?? (line.Height, line.Baseline);
+            ApplyLineSpacing(info, natural, baseline, p);
+            info.TextOffset = info.Baseline - line.Baseline;
             nextBreak = line.GetTextLineBreak()?.Clone();
             return info;
         }
@@ -256,6 +259,46 @@ public sealed class LineFormatter : IDisposable
             };
         }
         return '\r';
+    }
+
+    /// <summary>Line height and baseline from the line's ordinary text and objects, when it has raised / lowered text; else null.</summary>
+    private static (double Height, double Baseline)? CleanMetrics(ParaSource source, int start, int length, bool endsParagraph)
+    {
+        var end = start + length;
+        var raised = false;
+        foreach (var s in source.Segments)
+        {
+            if (s.SrcEnd <= start || s.SrcStart >= end) continue;
+            if (s.Props != null && s.Props.BaselineAlignment != BaselineAlignment.Baseline && s.Kind is SegKind.Text or SegKind.Group or SegKind.Label)
+            {
+                raised = true;
+                break;
+            }
+        }
+        if (!raised) return null;
+        double ascent = 0, descent = 0;
+        void Take(InkRunProps props)
+        {
+            var family = props.Typeface.FontFamily;
+            var size = props.FontRenderingEmSize;
+            ascent = Math.Max(ascent, family.Baseline * size);
+            descent = Math.Max(descent, (family.LineSpacing - family.Baseline) * size);
+        }
+        foreach (var s in source.Segments)
+        {
+            if (s.SrcEnd <= start || s.SrcStart >= end) continue;
+            if (s.Kind == SegKind.Object && s.Object is InkObject o)
+            {
+                ascent = Math.Max(ascent, o.BaselineOffset);
+                descent = Math.Max(descent, o.Height - o.BaselineOffset);
+            }
+            else if (s.Props != null && s.Props.BaselineAlignment == BaselineAlignment.Baseline && s.Kind is not (SegKind.Hidden or SegKind.Object))
+            {
+                Take(s.Props);
+            }
+        }
+        if (endsParagraph || ascent <= 0) Take(source.MarkProps);
+        return (ascent + descent, ascent);
     }
 
     private static void ApplyLineSpacing(LineInfo info, double natural, double baseline, ResolvedPara p)
