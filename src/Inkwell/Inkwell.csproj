@@ -1,0 +1,83 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Two editions from one source:
+      net10.0-windows  Windows 10 / 11, self-contained (x64, x86 or ARM64 via -r win-...)
+      net48            Windows 7 SP1 / 8.1 (and newer), uses the .NET Framework 4.8 built into Windows
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFrameworks>net10.0-windows;net48</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <AssemblyName>Inkwell</AssemblyName>
+    <RootNamespace>Inkwell</RootNamespace>
+    <ApplicationIcon>Assets\Inkwell.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <StartupObject>Inkwell.Program</StartupObject>
+
+    <Version>1.0.0</Version>
+    <Product>Inkwell</Product>
+    <Company>Inkwell</Company>
+    <Description>Inkwell - write beautifully, without fighting your document</Description>
+    <Copyright>Copyright © 2026 Muhammad Noman</Copyright>
+
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0-windows'">
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net48'">
+    <!-- AnyCPU: runs as 64-bit on 64-bit Windows and as 32-bit on 32-bit Windows -->
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+
+  <!--
+    Which installer this build belongs to (x64, arm64, x86 or win7-8): the updater downloads the same edition.
+    build.ps1 passes -p:InkwellEdition=...; otherwise it follows the target.
+  -->
+  <PropertyGroup>
+    <InkwellEdition Condition="'$(InkwellEdition)' == '' and '$(TargetFramework)' == 'net48'">win7-8</InkwellEdition>
+    <InkwellEdition Condition="'$(InkwellEdition)' == '' and '$(RuntimeIdentifier)' == 'win-arm64'">arm64</InkwellEdition>
+    <InkwellEdition Condition="'$(InkwellEdition)' == '' and '$(RuntimeIdentifier)' == 'win-x86'">x86</InkwellEdition>
+    <InkwellEdition Condition="'$(InkwellEdition)' == ''">x64</InkwellEdition>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AssemblyMetadata Include="Edition" Value="$(InkwellEdition)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Program.Main decides between handing files to a running Inkwell and starting the UI. -->
+    <ApplicationDefinition Remove="App.xaml" />
+    <Page Include="App.xaml" />
+    <Compile Include="..\Shared\*.cs" LinkBase="Shared" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Inkwell.Core\Inkwell.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
+    <PackageReference Include="System.Text.Json" Version="10.0.12" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="UIAutomationProvider" />
+    <Reference Include="UIAutomationTypes" />
+    <Reference Include="ReachFramework" />
+    <Reference Include="System.Printing" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\Inkwell.ico" />
+    <Page Update="Assets\Logo.xaml" />
+    <None Include="Assets\InkwellDoc.ico" Link="InkwellDoc.ico" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="..\..\THIRD-PARTY-NOTICES.txt" Link="THIRD-PARTY-NOTICES.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

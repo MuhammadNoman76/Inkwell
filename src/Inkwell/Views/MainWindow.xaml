@@ -1,0 +1,70 @@
+<c:FluentWindow x:Class="Inkwell.Views.MainWindow"
+                xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                xmlns:c="clr-namespace:Inkwell.Controls"
+                Title="Inkwell" Width="1440" Height="900" MinWidth="980" MinHeight="620"
+                WindowStartupLocation="CenterScreen" AllowDrop="True">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- update offer (Windows 11 InfoBar style) -->
+        <Border x:Name="UpdateBar" Margin="12,8,12,4" CornerRadius="6" Padding="16,12,10,12" Visibility="Collapsed"
+                Background="{DynamicResource Status.InfoBackground}" BorderBrush="{DynamicResource Card.Stroke}" BorderThickness="1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <c:IconView Width="16" Height="16" Margin="0,2,14,0" VerticalAlignment="Top" Foreground="{DynamicResource Accent.Fill}" Data="{StaticResource Icon.ArrowDownload}" />
+                <StackPanel Grid.Column="1">
+                    <WrapPanel>
+                        <TextBlock x:Name="UpdateHeading" Style="{StaticResource Text.BodyStrong}" Margin="0,0,12,0" />
+                        <TextBlock x:Name="UpdateSubtitle" Style="{StaticResource Text.BodySecondary}" />
+                    </WrapPanel>
+                    <ItemsControl x:Name="UpdateNotes" Margin="0,6,0,0" Focusable="False" />
+                    <StackPanel x:Name="UpdateButtons" Orientation="Horizontal" Margin="0,10,0,0">
+                        <Button x:Name="UpdateNowButton" Style="{StaticResource AccentButton}" Content="Update now" Click="OnUpdateNow" />
+                        <Button Margin="8,0,0,0" Content="Later" Click="OnUpdateLater" />
+                        <Button Margin="8,0,0,0" Style="{StaticResource SubtleButton}" Content="Skip this version" Click="OnUpdateSkip" />
+                    </StackPanel>
+                    <StackPanel x:Name="UpdateProgressPanel" Margin="0,10,0,0" Visibility="Collapsed">
+                        <ProgressBar x:Name="UpdateProgress" Minimum="0" Maximum="1" Width="320" HorizontalAlignment="Left" />
+                        <DockPanel Margin="0,6,0,0" Width="320" HorizontalAlignment="Left">
+                            <Button DockPanel.Dock="Right" Style="{StaticResource LinkButton}" Content="Cancel" Click="OnUpdateCancel" />
+                            <TextBlock x:Name="UpdateProgressText" Style="{StaticResource Text.Caption}" />
+                        </DockPanel>
+                    </StackPanel>
+                    <TextBlock x:Name="UpdateError" Margin="0,8,0,0" Style="{StaticResource Text.Caption}" Foreground="{DynamicResource Status.Critical}" Visibility="Collapsed" />
+                </StackPanel>
+                <Button Grid.Column="2" VerticalAlignment="Top" Style="{StaticResource IconButton}" c:Ui.Icon="{StaticResource Icon.Dismiss}"
+                        ToolTip="Close" AutomationProperties.Name="Close the update message" Click="OnUpdateLater" />
+            </Grid>
+        </Border>
+
+        <ContentControl x:Name="Host" Grid.Row="1" Focusable="False" />
+
+        <!-- busy overlay (opening, importing, exporting) -->
+        <Grid x:Name="Busy" Grid.RowSpan="2" Visibility="Collapsed" Background="{DynamicResource Smoke}">
+            <Border Width="400" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource FlyoutSurface}" Padding="24,20,24,22">
+                <StackPanel>
+                    <TextBlock x:Name="BusyTitle" Style="{StaticResource Text.BodyStrong}" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
+                    <TextBlock x:Name="BusyDetail" Margin="0,4,0,14" Style="{StaticResource Text.Caption}" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
+                    <ProgressBar x:Name="BusyBar" Minimum="0" Maximum="1" IsIndeterminate="True" />
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- toast -->
+        <Border x:Name="Toast" Grid.RowSpan="2" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,40" Padding="16,10,16,11"
+                Style="{StaticResource FlyoutSurface}" Visibility="Collapsed" IsHitTestVisible="False">
+            <DockPanel>
+                <c:IconView x:Name="ToastIcon" DockPanel.Dock="Left" Width="16" Height="16" Margin="0,1,10,0" Foreground="{DynamicResource Accent.Fill}" Data="{StaticResource Icon.Info}" />
+                <TextBlock x:Name="ToastText" Style="{StaticResource Text.Body}" MaxWidth="560" />
+            </DockPanel>
+        </Border>
+    </Grid>
+</c:FluentWindow>
