@@ -306,10 +306,11 @@ public static class DemoDocuments
             editor.InsertText("Nearly all old");
         }
         var add = back.Text.IndexOf(" replaced", StringComparison.Ordinal);
+        // "…in Seoul, famously, replaced…"
         if (add >= 0)
         {
             editor.Selection = new Selection(new DocPos(back, add));
-            editor.InsertText(", famously,");
+            editor.InsertText(" famously,");
         }
         editor.Author = "Samira Haddad";
         editor.SetTrackChanges(false);

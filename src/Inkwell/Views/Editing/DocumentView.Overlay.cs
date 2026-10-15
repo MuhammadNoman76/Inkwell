@@ -128,6 +128,14 @@ public sealed partial class DocumentView
             var page = layout.Pages[i];
             dc.PushTransform(new TranslateTransform(rect.X, rect.Y));
             if (FocusMode && !EditingHeaderFooter) DrawFocusDim(dc, page, selection);
+            foreach (var h in FocusMode ? new List<HighlightRange>() : CommentHighlights)
+            {
+                if (h.Start.Para == null) continue;
+                var brush = new SolidColorBrush(h.Color);
+                var rects = layout.SelectionRects(new Selection(h.Start, h.End), page).ToList();
+                foreach (var r in rects) dc.DrawRectangle(brush, null, r);
+                if (rects.Count > 0) DrawCommentFlag(dc, page, rects[0], h.Color);
+            }
             foreach (var h in Highlights)
             {
                 if (h.Start.Para == null) continue;
@@ -421,5 +429,32 @@ public sealed partial class DocumentView
             if (box != null) return (page, box.Value);
         }
         return null;
+    }
+}
+
+public sealed partial class DocumentView
+{
+    /// <summary>The text comments are attached to (shown softly highlighted, with a mark in the margin).</summary>
+    public List<HighlightRange> CommentHighlights { get; } = new();
+
+    /// <summary>A small speech-bubble mark in the right margin next to a commented line.</summary>
+    private void DrawCommentFlag(DrawingContext dc, PageLayout page, Rect line, Color color)
+    {
+        var x = page.Size.Width - page.Margins.Right + 14;
+        if (x + 16 > page.Size.Width) x = page.Size.Width - 18;
+        var y = line.Top + Math.Max(0, (line.Height - 12) / 2);
+        var bubble = new StreamGeometry();
+        using (var g = bubble.Open())
+        {
+            g.BeginFigure(new Point(x, y), true, true);
+            g.LineTo(new Point(x + 14, y), true, true);
+            g.LineTo(new Point(x + 14, y + 9), true, true);
+            g.LineTo(new Point(x + 6, y + 9), true, true);
+            g.LineTo(new Point(x + 3, y + 12), true, true);
+            g.LineTo(new Point(x + 3, y + 9), true, true);
+            g.LineTo(new Point(x, y + 9), true, true);
+        }
+        bubble.Freeze();
+        dc.DrawGeometry(new SolidColorBrush(Color.FromArgb(0xFF, color.R, color.G, color.B)), new Pen(new SolidColorBrush(Color.FromArgb(0x80, 0x80, 0x60, 0x00)), 0.6), bubble);
     }
 }

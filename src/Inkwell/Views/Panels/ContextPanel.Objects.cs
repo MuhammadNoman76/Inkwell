@@ -132,6 +132,9 @@ public sealed partial class ContextPanel
         var current = drawing.Wrap == mode;
         var b = new Button { Margin = new Thickness(0, 0, 6, 6), Padding = new Thickness(6, 8, 6, 6), ToolTip = DocEditor.WrapName(mode) };
         b.SetResourceReference(StyleProperty, "CardButton");
+        b.SetResourceReference(BackgroundProperty, "Card.Background");
+        b.SetResourceReference(BorderBrushProperty, "Card.Stroke");
+        b.BorderThickness = new Thickness(1);
         if (current)
         {
             b.BorderThickness = new Thickness(2);

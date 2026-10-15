@@ -20,7 +20,7 @@
             </Grid.ColumnDefinitions>
 
             <!-- app menu + document name -->
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+            <StackPanel x:Name="BarLeft" Orientation="Horizontal" VerticalAlignment="Center">
                 <Button x:Name="MenuButton" Style="{StaticResource SubtleButton}" Padding="6,4" ToolTip="Menu (Alt+F)"
                         AutomationProperties.Name="Menu" Click="OnMenu">
                     <StackPanel Orientation="Horizontal">
@@ -28,14 +28,14 @@
                         <c:IconView Width="10" Height="10" Margin="6,1,0,0" Data="{StaticResource Icon.ChevronDown}" Foreground="{DynamicResource Text.Secondary}" />
                     </StackPanel>
                 </Button>
-                <StackPanel Margin="8,0,0,0" VerticalAlignment="Center" MaxWidth="220">
+                <StackPanel x:Name="DocNamePanel" Margin="8,0,0,0" VerticalAlignment="Center" MaxWidth="190">
                     <TextBlock x:Name="DocName" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Text.Primary}" />
                     <TextBlock x:Name="SaveState" FontSize="11" Foreground="{DynamicResource Text.Tertiary}" TextTrimming="CharacterEllipsis" />
                 </StackPanel>
             </StackPanel>
 
             <!-- undo / redo -->
-            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0,0,0">
+            <StackPanel x:Name="BarUndo" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0,0,0">
                 <Button x:Name="UndoButton" Style="{StaticResource IconButton}" c:Ui.Icon="{StaticResource Icon.ArrowUndo}" ToolTip="Undo (Ctrl+Z)"
                         AutomationProperties.Name="Undo" Click="OnUndo" />
                 <Button x:Name="RedoButton" Style="{StaticResource IconButton}" c:Ui.Icon="{StaticResource Icon.ArrowRedo}" ToolTip="Redo (Ctrl+Y)"
@@ -73,27 +73,20 @@
                     <ToggleButton x:Name="NumbersToggle" Style="{StaticResource IconToggle}" c:Ui.Icon="{StaticResource Icon.TextNumberListLtr}" ToolTip="Numbering" AutomationProperties.Name="Numbering" Click="OnNumbers" />
                     <Button x:Name="AlignButton" Style="{StaticResource IconButton}" c:Ui.Icon="{StaticResource Icon.TextAlignLeft}" ToolTip="Alignment and direction" AutomationProperties.Name="Alignment and direction" Click="OnAlignMenu" />
                     <Border Width="1" Height="22" Margin="6,0,4,0" Background="{DynamicResource Divider}" />
-                    <Button Style="{StaticResource CommandButton}" c:Ui.Icon="{StaticResource Icon.ImageAdd}" Content="Picture" ToolTip="Insert a picture (or paste / drop one)" AutomationProperties.Name="Insert picture" Click="OnInsertPicture" />
-                    <Button Style="{StaticResource CommandButton}" c:Ui.Icon="{StaticResource Icon.Table}" Content="Table" ToolTip="Insert a table" AutomationProperties.Name="Insert table" Click="OnInsertTable" />
-                    <Button Style="{StaticResource CommandButton}" c:Ui.Icon="{StaticResource Icon.Link}" Content="Link" ToolTip="Insert a link (Ctrl+Shift+K)" AutomationProperties.Name="Insert link" Click="OnInsertLink" />
-                    <Button Style="{StaticResource CommandButton}" c:Ui.Icon="{StaticResource Icon.CommentAdd}" Content="Comment" ToolTip="Add a comment (Ctrl+Alt+M)" AutomationProperties.Name="Add comment" Click="OnInsertComment" />
+                    <StackPanel x:Name="QuickInsert" Orientation="Horizontal">
+                    <Button Style="{StaticResource IconButton}" c:Ui.Icon="{StaticResource Icon.ImageAdd}" ToolTip="Insert a picture (or paste / drop one)" AutomationProperties.Name="Insert picture" Click="OnInsertPicture" />
+                    <Button Style="{StaticResource IconButton}" c:Ui.Icon="{StaticResource Icon.Table}" ToolTip="Insert a table" AutomationProperties.Name="Insert table" Click="OnInsertTable" />
+                    <Button Style="{StaticResource IconButton}" c:Ui.Icon="{StaticResource Icon.Link}" ToolTip="Insert a link (Ctrl+Shift+K)" AutomationProperties.Name="Insert link" Click="OnInsertLink" />
+                    <Button Style="{StaticResource IconButton}" c:Ui.Icon="{StaticResource Icon.CommentAdd}" ToolTip="Add a comment (Ctrl+Alt+M)" AutomationProperties.Name="Add comment" Click="OnInsertComment" />
+                    </StackPanel>
                     <Button Style="{StaticResource CommandButton}" c:Ui.Icon="{StaticResource Icon.Add}" Content="Insert" ToolTip="More things to insert" AutomationProperties.Name="Insert more" Click="OnInsertMenu" />
                 </StackPanel>
             </ScrollViewer>
 
             <!-- right side -->
-            <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
-                <Button x:Name="PaletteButton" Style="{StaticResource PaletteButton}" Width="200" Margin="0,0,8,0" Content="Search commands"
+            <StackPanel x:Name="BarRight" Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
+                <Button x:Name="PaletteButton" Style="{StaticResource PaletteButton}" Width="176" Margin="0,0,8,0" Content="Search commands"
                         AutomationProperties.Name="Command palette" ToolTip="Find any command, style, template or heading (Ctrl+K)" Click="OnPalette" />
-                <Border Style="{StaticResource SegmentTray}" Margin="0,0,6,0">
-                    <StackPanel Orientation="Horizontal">
-                        <RadioButton x:Name="ViewPages" Style="{StaticResource IconSegment}" c:Ui.Icon="{StaticResource Icon.DocumentOnePage}" IsChecked="True"
-                                     ToolTip="Page view" AutomationProperties.Name="Page view" GroupName="View" Checked="OnViewModeChanged" />
-                        <RadioButton x:Name="ViewPageless" Style="{StaticResource IconSegment}" c:Ui.Icon="{StaticResource Icon.DocumentText}"
-                                     ToolTip="Pageless view: continuous text for drafting" AutomationProperties.Name="Pageless view" GroupName="View" Checked="OnViewModeChanged" />
-                    </StackPanel>
-                </Border>
-                <ToggleButton x:Name="FocusToggle" Style="{StaticResource IconToggle}" c:Ui.Icon="{StaticResource Icon.Focus}" ToolTip="Focus mode (F11)" AutomationProperties.Name="Focus mode" Click="OnFocusToggle" />
                 <ToggleButton x:Name="ReviewToggle" Style="{StaticResource IconToggle}" c:Ui.Icon="{StaticResource Icon.TrackChanges}" ToolTip="Review: track changes and comments" AutomationProperties.Name="Review" Click="OnReviewToggle" />
                 <ToggleButton x:Name="PanelToggle" Style="{StaticResource IconToggle}" c:Ui.Icon="{StaticResource Icon.PanelRight}" ToolTip="Show or hide the panel (Ctrl+F1)" AutomationProperties.Name="Panel" Click="OnPanelToggle" Margin="0,0,6,0" />
                 <Button x:Name="ShareButton" Style="{StaticResource AccentCommandButton}" c:Ui.Icon="{StaticResource Icon.Share}" Content="Export"
@@ -106,7 +99,7 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition x:Name="OutlineColumn" Width="236" />
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition x:Name="PanelColumn" Width="316" />
+                <ColumnDefinition x:Name="PanelColumn" Width="332" />
             </Grid.ColumnDefinitions>
 
             <Border x:Name="OutlineHost" Grid.Column="0" />
@@ -129,6 +122,17 @@
                     <Border x:Name="StatusBar" Grid.Row="1" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource Divider}" Background="{DynamicResource Layer.Background}" Padding="10,0,8,0" Height="32">
                         <DockPanel>
                             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                                <Border Style="{StaticResource SegmentTray}" Margin="0,0,4,0" Padding="0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <RadioButton x:Name="ViewPages" Style="{StaticResource IconSegment}" Width="28" Height="24" c:Ui.Icon="{StaticResource Icon.DocumentOnePage}" IsChecked="True"
+                                                     ToolTip="Page view" AutomationProperties.Name="Page view" GroupName="View" Checked="OnViewModeChanged" />
+                                        <RadioButton x:Name="ViewPageless" Style="{StaticResource IconSegment}" Width="28" Height="24" c:Ui.Icon="{StaticResource Icon.DocumentText}"
+                                                     ToolTip="Pageless view: continuous text for drafting" AutomationProperties.Name="Pageless view" GroupName="View" Checked="OnViewModeChanged" />
+                                    </StackPanel>
+                                </Border>
+                                <ToggleButton x:Name="FocusToggle" Style="{StaticResource IconToggle}" Width="28" Height="26" c:Ui.Icon="{StaticResource Icon.Focus}" ToolTip="Focus mode (F11)"
+                                              AutomationProperties.Name="Focus mode" Click="OnFocusToggle" Margin="0,0,6,0" />
+                                <Border Width="1" Height="16" Margin="0,0,6,0" Background="{DynamicResource Divider}" />
                                 <Button Style="{StaticResource IconButton}" Width="26" Height="26" c:Ui.Icon="{StaticResource Icon.DocumentMultiple}" ToolTip="Several pages side by side"
                                         AutomationProperties.Name="Multiple pages" Click="OnMultiplePages" />
                                 <Button Style="{StaticResource IconButton}" Width="26" Height="26" c:Ui.Icon="{StaticResource Icon.PageFit}" ToolTip="Fit the page width (Ctrl+0)"

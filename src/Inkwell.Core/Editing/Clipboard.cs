@@ -577,8 +577,11 @@ public static class PasteNormalizer
                     props.StyleId ??= _dest.Styles.Get("ListParagraph") != null ? "ListParagraph" : null;
                 }
                 p.Props = props;
+                // A whole paragraph in a typewriter font is a font choice, not code: only some monospace words become code.
+                var texts = runs.Where(r => r.Inline is TextRun { Text.Length: > 0 }).ToList();
+                var codeAllowed = props.StyleId != "Code" && texts.Count > 0 && !texts.All(r => IsMonospace(r.Resolved.AsciiFont));
                 foreach (var (inline, resolved) in runs)
-                    inline.Props = MatchDestination(inline, resolved, baseline);
+                    inline.Props = MatchDestination(inline, resolved, baseline, codeAllowed);
             }
             else
             {
@@ -621,7 +624,7 @@ public static class PasteNormalizer
         }
 
         /// <summary>Emphasis and meaning only (bold, italic, underline, strike, super/subscript, caps, direction, language, links, code).</summary>
-        private RunProps MatchDestination(Inline inline, ResolvedRun resolved, ResolvedRun baseline)
+        private RunProps MatchDestination(Inline inline, ResolvedRun resolved, ResolvedRun baseline, bool codeAllowed)
         {
             var rp = new RunProps();
             if (resolved.Bold != baseline.Bold) rp.Bold = resolved.Bold;
@@ -640,7 +643,7 @@ public static class PasteNormalizer
             else if (inline is NoteReference nr) rp.StyleId = nr.Kind == NoteKind.Footnote ? "FootnoteReference" : "EndnoteReference";
             else if (style != null && _dest.Styles.ByName(style.Name) is { Type: "character" } same && style.Name is "Strong" or "Emphasis" or "Hyperlink")
                 rp.StyleId = same.Id;
-            else if (IsMonospace(resolved.AsciiFont) && _dest.Styles.Get("InlineCode") != null) rp.StyleId = "InlineCode";
+            else if (codeAllowed && IsMonospace(resolved.AsciiFont) && _dest.Styles.Get("InlineCode") != null) rp.StyleId = "InlineCode";
             // Complex-script text (Urdu, Arabic…) keeps its font: the document's font may not have those letters.
             if (resolved.ComplexScript || resolved.Rtl)
             {

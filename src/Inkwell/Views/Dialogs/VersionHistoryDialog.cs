@@ -45,10 +45,10 @@ public sealed class VersionHistoryDialog : FluentWindow
         var footer = new Border();
         footer.SetResourceReference(StyleProperty, "DialogFooter");
         var buttons = new DockPanel();
-        var where = new TextBlock { Text = "Kept on this PC in " + EditorView.History.Root, FontSize = 11.5, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis, MaxWidth = 360 };
+        var where = new TextBlock { Text = "Kept on this PC, in Inkwell's history folder", ToolTip = EditorView.History.Root, FontSize = 11.5, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis, Margin = new Thickness(0, 0, 12, 0) };
         where.SetResourceReference(TextBlock.ForegroundProperty, "Text.Tertiary");
-        buttons.Children.Add(where);
         var right = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
+        DockPanel.SetDock(right, Dock.Right);
         _name = new Button { Content = "Name it…", Margin = new Thickness(8, 0, 0, 0) };
         _name.Click += (_, _) => NameSelected();
         _delete = new Button { Content = "Delete", Margin = new Thickness(8, 0, 0, 0) };
@@ -62,6 +62,7 @@ public sealed class VersionHistoryDialog : FluentWindow
         close.Click += (_, _) => Close();
         foreach (var b in new[] { _name, _delete, _open, _restore, close }) right.Children.Add(b);
         buttons.Children.Add(right);
+        buttons.Children.Add(where);
         footer.Child = buttons;
         DockPanel.SetDock(footer, Dock.Bottom);
         root.Children.Add(footer);

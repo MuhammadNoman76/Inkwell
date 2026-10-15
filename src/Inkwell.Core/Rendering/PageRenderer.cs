@@ -20,6 +20,9 @@ public sealed class RenderExtras
 
     /// <summary>Called for every text line drawn (PDF links and text, hit testing aids).</summary>
     public Action<ParaFragment, LineInfo, TextLine, Point>? LineDrawn { get; set; }
+
+    /// <summary>Formatting marks in headers and footers too (while they are being edited).</summary>
+    public bool HeaderFooterMarks { get; set; }
 }
 
 /// <summary>
@@ -54,8 +57,10 @@ public sealed class PageRenderer
 
         // Header and footer.
         var headerEnv = Env.With(_layout.Paginator.FieldsFor(page));
-        foreach (var f in page.Header) DrawFragment(dc, f, extras, headerEnv);
-        foreach (var f in page.Footer) DrawFragment(dc, f, extras, headerEnv);
+        // Formatting marks in headers and footers only while they are being edited.
+        var hfExtras = extras.FormattingMarks && !extras.HeaderFooterMarks ? new RenderExtras { FormattingMarks = false, NoPaper = extras.NoPaper, LineDrawn = extras.LineDrawn } : extras;
+        foreach (var f in page.Header) DrawFragment(dc, f, hfExtras, headerEnv);
+        foreach (var f in page.Footer) DrawFragment(dc, f, hfExtras, headerEnv);
 
         foreach (var col in page.Columns)
         {
@@ -69,15 +74,6 @@ public sealed class PageRenderer
 
         if (View.Revisions is RevisionView.AllMarkup or RevisionView.Simple) DrawChangeBars(dc, page);
 
-        if (extras.FormattingMarks && page.EndMarker != null && !View.Mode.Equals(ViewMode.Pageless))
-        {
-            var last = page.Columns.SelectMany(c => c.Content).OfType<ParaFragment>().LastOrDefault();
-            if (last != null && last.Lines.Count > 0)
-            {
-                var line = last.Lines[last.Lines.Count - 1];
-                DrawBreakMarker(dc, last.X, last.X + last.Width, line.Top + line.Height + 2, page.EndMarker);
-            }
-        }
     }
 
     private void DrawFloat(DrawingContext dc, FloatPlacement f) => DrawingRun.DrawDrawing(dc, f.Box, f.Drawing, Env);
@@ -261,7 +257,11 @@ public sealed class PageRenderer
             DrawGlyph(dc, source.IsRtl ? "¶" : "¶", new Point(x, line.Top + line.TextOffset + line.NaturalHeight / 2), size, brush, center: false);
             if (source.Paragraph.Props.Section is { } sect)
             {
-                var label = "Section break (" + sect.BreakType switch
+                // Word names a section break after how the next section starts.
+                var sections = _layout.Document.Sections();
+                var at = sections.FindIndex(s => ReferenceEquals(s.BreakParagraph, source.Paragraph));
+                var nextType = at >= 0 && at + 1 < sections.Count ? sections[at + 1].Props.BreakType : sect.BreakType;
+                var label = "Section break (" + nextType switch
                 {
                     "continuous" => "Continuous",
                     "evenPage" => "Even Page",

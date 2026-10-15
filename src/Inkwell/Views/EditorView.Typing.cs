@@ -265,6 +265,7 @@ public partial class EditorView
     /// <summary>"Smart quotes · Undo · Stop doing this" next to the change.</summary>
     private void ShowAutoCorrectChip(List<AppliedCorrection>? corrections, string description, string ruleId)
     {
+        HideAutoCorrectChip();
         _chipCorrections = corrections;
         _chipRule = ruleId;
         _chipShown = DateTime.UtcNow;
@@ -303,6 +304,7 @@ public partial class EditorView
     private void UndoAutoCorrect()
     {
         var corrections = _chipCorrections;
+        HideAutoCorrectChip();
         // Straight after the change: a plain undo. Later (more was typed): put the original text back where it was.
         if (corrections == null || Editor.History.Top is { IsAutomatic: true })
         {

@@ -413,7 +413,7 @@ public sealed partial class DocumentView : FrameworkElement, IScrollInfo
                 {
                     try
                     {
-                        renderer.DrawPage(dc, page, new RenderExtras { FormattingMarks = ShowFormattingMarks });
+                        renderer.DrawPage(dc, page, new RenderExtras { FormattingMarks = ShowFormattingMarks, HeaderFooterMarks = EditingHeaderFooter });
                         DrawHeaderFooterChrome(dc, page);
                     }
                     catch (Exception ex)

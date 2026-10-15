@@ -79,6 +79,7 @@ public partial class EditorView
 
         SizeBox.ValueChanged += size => Run(() => Editor.SetFontSize(size));
         PreviewKeyDown += OnPreviewKey;
+        CommandBar.SizeChanged += (_, _) => Dispatcher.BeginInvoke(new Action(FitCommandBar), DispatcherPriority.Loaded);
         AllowDrop = true;
         Drop += OnDrop;
         DragOver += OnDragOver;
@@ -278,6 +279,7 @@ public partial class EditorView
             TrackStatus.Visibility = Editor.TrackChanges ? Visibility.Visible : Visibility.Collapsed;
             UpdatePageStatus();
             UpdateWordStatus();
+            UpdateCommentHighlights();
             UpdateLanguage();
             Panel.Refresh();
         }
@@ -332,7 +334,7 @@ public partial class EditorView
 
     public void SetPanelVisible(bool visible)
     {
-        PanelColumn.Width = visible ? new GridLength(316) : new GridLength(0);
+        PanelColumn.Width = visible ? new GridLength(332) : new GridLength(0);
         PanelHost.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
         PanelToggle.IsChecked = visible;
     }
@@ -518,4 +520,44 @@ public partial class EditorView
     }
 
     private void OnPalette(object sender, RoutedEventArgs e) => OpenPalette();
+}
+
+public partial class EditorView
+{
+    /// <summary>
+    /// Keeps the command bar on one line in narrower windows: first the quick insert buttons go (they're in the
+    /// Insert menu too), then the search box shrinks to its icon and shortcut, then the document name gets shorter.
+    /// </summary>
+    private bool _fitting;
+
+    private void FitCommandBar()
+    {
+        if (_fitting || CommandBar.ActualWidth <= 0) return;
+        _fitting = true;
+        try
+        {
+            QuickInsert.Visibility = Visibility.Visible;
+            PaletteButton.Width = 176;
+            PaletteButton.Content = "Search commands";
+            DocNamePanel.MaxWidth = 190;
+            // The middle part scrolls sideways when it doesn't fit: that's the overflow to remove.
+            bool Fits()
+            {
+                CommandBar.UpdateLayout();
+                FormatBar.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+                return FormatBar.DesiredSize.Width <= BarScroller.ActualWidth + 0.5;
+            }
+            if (Fits()) return;
+            QuickInsert.Visibility = Visibility.Collapsed;
+            if (Fits()) return;
+            PaletteButton.Content = null;
+            PaletteButton.Width = 96;
+            if (Fits()) return;
+            DocNamePanel.MaxWidth = 110;
+        }
+        finally
+        {
+            _fitting = false;
+        }
+    }
 }

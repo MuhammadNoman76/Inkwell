@@ -36,7 +36,9 @@ public partial class MainWindow
     }
 
     /// <summary>INKWELL_TEST_OFFSCREEN=1: windows open off screen and never take the focus (automated tests).</summary>
-    public static bool IsTestOffscreen { get; } = Environment.GetEnvironmentVariable("INKWELL_TEST_OFFSCREEN") == "1";
+    public static bool IsTestOffscreen => s_offscreen || Services.CaptureRunner.Running;
+
+    private static readonly bool s_offscreen = Environment.GetEnvironmentVariable("INKWELL_TEST_OFFSCREEN") == "1";
 
     public DocumentSession? Session => _editor?.Session;
     public EditorView? Editor => _editor;

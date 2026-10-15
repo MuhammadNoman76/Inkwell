@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Media;
 using Inkwell.Core.Editing;
 using Inkwell.Core.Model;
+using Inkwell.Core.Layout;
 
 namespace Inkwell.Views;
 
@@ -150,5 +151,52 @@ public partial class EditorView
             return null;
         }));
         UpdateWordStatus();
+    }
+}
+
+public partial class EditorView
+{
+    private int _commentVersion = -1;
+    private RevisionView _commentView;
+
+    /// <summary>Soft highlights on commented text (open comments), unless markup is hidden.</summary>
+    private void UpdateCommentHighlights()
+    {
+        var view = Layout.View.Revisions;
+        if (_commentVersion == Editor.History.Version && _commentView == view) return;
+        _commentVersion = Editor.History.Version;
+        _commentView = view;
+        Doc.CommentHighlights.Clear();
+        var comments = Session.Document.Comments;
+        if (comments.Count == 0 || view is RevisionView.NoMarkup or RevisionView.Original)
+        {
+            Doc.Redraw();
+            return;
+        }
+        var open = new HashSet<int>(comments.Where(c => !c.Done && c.ParentId == null).Select(c => c.Id));
+        var starts = new Dictionary<int, DocPos>();
+        var color = Color.FromArgb(0x48, 0xF5, 0xC2, 0x3B);
+        foreach (var story in Session.Document.Stories)
+        {
+            if (story is Comment) continue;
+            foreach (var p in story.Paragraphs)
+            {
+                var pos = 0;
+                foreach (var i in p.Inlines)
+                {
+                    if (i is CommentMarker m && open.Contains(m.Id))
+                    {
+                        if (m.Kind == CommentMarkerKind.RangeStart) starts[m.Id] = new DocPos(p, pos);
+                        else if (m.Kind == CommentMarkerKind.RangeEnd && starts.TryGetValue(m.Id, out var s))
+                        {
+                            Doc.CommentHighlights.Add(new Editing.HighlightRange(s, new DocPos(p, pos), color));
+                            starts.Remove(m.Id);
+                        }
+                    }
+                    pos += i.Length;
+                }
+            }
+        }
+        Doc.Redraw();
     }
 }

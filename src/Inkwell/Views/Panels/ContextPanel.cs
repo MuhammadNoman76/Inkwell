@@ -155,7 +155,7 @@ public sealed partial class ContextPanel : Border
         _tabs.Children.Clear();
         void Tab(string text, PanelMode mode)
         {
-            var r = new RadioButton { Content = text, GroupName = "PanelTabs" + GetHashCode(), IsChecked = current == mode, FontSize = 12.5 };
+            var r = new RadioButton { Content = text, GroupName = "PanelTabs" + GetHashCode(), IsChecked = current == mode, FontSize = 12.5, Padding = new Thickness(9, 3, 9, 4) };
             r.SetResourceReference(StyleProperty, "TextSegment");
             AutomationProperties.SetName(r, text + " panel");
             r.Checked += (_, _) =>
@@ -229,17 +229,24 @@ public sealed partial class ContextPanel : Border
         return grid;
     }
 
-    private CheckBox Switch(string text, bool on, Action<bool> changed, string? tooltip = null)
+    /// <summary>A labelled on / off switch (the label on the left, the switch on the right).</summary>
+    private FrameworkElement Switch(string text, bool on, Action<bool> changed, string? tooltip = null)
     {
-        var c = new CheckBox { Content = text, IsChecked = on, Margin = new Thickness(0, 2, 0, 2), ToolTip = tooltip };
+        var row = new DockPanel { Margin = new Thickness(0, 1, 0, 1), ToolTip = tooltip };
+        var c = new CheckBox { IsChecked = on };
         c.SetResourceReference(StyleProperty, "ToggleSwitch");
+        AutomationProperties.SetName(c, text);
+        DockPanel.SetDock(c, Dock.Right);
+        row.Children.Add(c);
+        var label = new TextBlock { Text = text, VerticalAlignment = VerticalAlignment.Center, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 8, 0) };
+        row.Children.Add(label);
         c.Click += (_, _) =>
         {
             var value = c.IsChecked == true;
             _editor.Run(() => changed(value));
             _editor.ScheduleState();
         };
-        return c;
+        return row;
     }
 
     private Border Segments(IEnumerable<(string? Text, string? Icon, string Name, bool On, Action Click)> items)
@@ -314,9 +321,13 @@ public sealed partial class ContextPanel : Border
         styleButton.Click += (_, _) => _editor.ShowStyleMenu(styleButton);
         AutomationProperties.SetName(styleButton, "Paragraph style: " + styleName);
         style.Children.Add(styleButton);
-        style.Children.Add(Commands(2,
+        style.Children.Add(Commands(1,
             Command("Update style", "Icon.TextEditStyle", Editor.UpdateStyleFromSelection, "Make the style look like the selection (every paragraph in this style changes)"),
             Command("Clear formatting", "Icon.TextClearFormatting", Editor.ClearFormatting, "Back to the style's look")));
+
+        // In a list, the list options come first (restart / continue numbering is what people look for).
+        var kind = Editor.ListKindOf(p);
+        if (kind != null) BuildListSection(kind);
 
         var text = Section("Text");
         var font = new Button { Content = (f.Font ?? "Mixed fonts") + "  ▾", HorizontalContentAlignment = HorizontalAlignment.Left, Padding = new Thickness(10, 5, 10, 6) };
@@ -349,8 +360,8 @@ public sealed partial class ContextPanel : Border
         })));
         para.Children.Add(Row("Direction", Segments(new (string?, string?, string, bool, Action)[]
         {
-            ("Left to right", null, "Left to right", !rp.Bidi, () => Editor.SetDirection(false)),
-            ("Right to left", null, "Right to left", rp.Bidi, () => Editor.SetDirection(true)),
+            (null, "Icon.TextParagraphDirectionRight", "Left to right", !rp.Bidi, () => Editor.SetDirection(false)),
+            (null, "Icon.TextParagraphDirectionLeft", "Right to left (Urdu, Arabic, Hebrew)", rp.Bidi, () => Editor.SetDirection(true)),
         })));
         var spacing = new ComboBox { Width = 120, HorizontalAlignment = HorizontalAlignment.Left };
         var lines = new[] { (240, "1.0"), (276, "1.15"), (360, "1.5"), (480, "2.0") };
@@ -370,26 +381,7 @@ public sealed partial class ContextPanel : Border
         para.Children.Add(Row("First line", Number(ToUnit(rp.FirstLine), -20, 20, Metric ? 0.25 : 0.1, 2, UnitSuffix, v => Editor.SetIndents(null, null, FromUnit(v)))));
         para.Children.Add(Note("A negative first line is a hanging indent."));
 
-        var kind = Editor.ListKindOf(p);
-        var list = Section("List", kind == null ? "Not a list. Type “- ” or “1. ” at the start of a line, or use the buttons." : null);
-        list.Children.Add(Segments(new (string?, string?, string, bool, Action)[]
-        {
-            (null, "Icon.TextBulletListLtr", "Bullets", kind == "bullet", () => Editor.ToggleList(true)),
-            (null, "Icon.TextNumberListLtr", "Numbering", kind == "number", () => Editor.ToggleList(false)),
-        }));
-        if (kind != null)
-        {
-            list.Children.Add(Commands(2,
-                Command("Level down", "Icon.TextIndentIncreaseLtr", () => Editor.Indent(true), "Tab at the start of the item"),
-                Command("Level up", "Icon.TextIndentDecreaseLtr", () => Editor.Indent(false), "Shift+Tab")));
-            if (kind == "number")
-            {
-                list.Children.Add(Commands(1,
-                    Command("Restart at 1", "Icon.TextNumberListLtr", () => Editor.RestartNumbering(1), "This item starts a new list at 1"),
-                    Command("Continue from the list above", "Icon.TextNumberListLtr", Editor.ContinueNumbering, "Number on from the previous list"),
-                    Command("Start at…", "Icon.TextNumberListLtr", AskStartNumber)));
-            }
-        }
+        if (kind == null) BuildListSection(null);
 
         var flow = Section("Pages", "How the paragraph breaks across pages.");
         flow.Children.Add(Switch("Keep with next", rp.KeepNext, on => Editor.SetKeepWithNext(on), "Never alone at the bottom of a page"));
@@ -416,6 +408,9 @@ public sealed partial class ContextPanel : Border
             var design = d;
             var card = new Button { HorizontalContentAlignment = HorizontalAlignment.Stretch, Margin = new Thickness(0, 0, 0, 8), Padding = new Thickness(14, 10, 14, 12) };
             card.SetResourceReference(StyleProperty, "CardButton");
+            card.SetResourceReference(BackgroundProperty, "Card.Background");
+            card.SetResourceReference(BorderBrushProperty, "Card.Stroke");
+            card.BorderThickness = new Thickness(1);
             var stack = new StackPanel();
             var heading = new TextBlock { Text = design.Name, FontFamily = Core.Rendering.FontCatalog.Get(design.HeadingFont), FontSize = 19, FontWeight = FontWeights.SemiBold };
             if (!Themes.ThemeManager.IsDark && OoxColor.Parse(design.HeadingColor) is { } accent) heading.Foreground = new SolidColorBrush(accent);
@@ -441,5 +436,28 @@ public sealed partial class ContextPanel : Border
             designs.Children.Add(card);
         }
         designs.Children.Add(Note("Your own changes to individual paragraphs stay; Ctrl+Z goes back to the previous design."));
+    }
+}
+
+public sealed partial class ContextPanel
+{
+    private void BuildListSection(string? kind)
+    {
+        var list = Section("List", kind == null ? "Not a list. Type “- ” or “1. ” at the start of a line, or use the buttons." : null);
+        list.Children.Add(Segments(new (string?, string?, string, bool, Action)[]
+        {
+            (null, "Icon.TextBulletListLtr", "Bullets", kind == "bullet", () => Editor.ToggleList(true)),
+            (null, "Icon.TextNumberListLtr", "Numbering", kind == "number", () => Editor.ToggleList(false)),
+        }));
+        if (kind == null) return;
+        list.Children.Add(Commands(2,
+            Command("Level down", "Icon.TextIndentIncreaseLtr", () => Editor.Indent(true), "Tab at the start of the item"),
+            Command("Level up", "Icon.TextIndentDecreaseLtr", () => Editor.Indent(false), "Shift+Tab")));
+        if (kind != "number") return;
+        var buttons = new List<Button> { Command("Restart at 1", "Icon.TextNumberListLtr", () => Editor.RestartNumbering(1), "This item starts a new list at 1") };
+        if (Editor.CanContinueNumbering())
+            buttons.Add(Command("Continue from the list above", "Icon.TextNumberListLtr", Editor.ContinueNumbering, "Number on from the previous list"));
+        buttons.Add(Command("Start at…", "Icon.TextNumberListLtr", AskStartNumber));
+        list.Children.Add(Commands(1, buttons.ToArray()));
     }
 }

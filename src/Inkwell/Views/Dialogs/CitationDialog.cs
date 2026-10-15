@@ -116,6 +116,7 @@ public sealed class CitationDialog : FluentWindow
         left.Children.Add(leftButtons);
         _list.Margin = new Thickness(0, 8, 0, 0);
         _list.SelectionMode = SelectionMode.Extended;
+        ScrollViewer.SetHorizontalScrollBarVisibility(_list, ScrollBarVisibility.Disabled);
         AutomationProperties.SetName(_list, "Sources");
         _list.SelectionChanged += (_, _) =>
         {
@@ -195,6 +196,7 @@ public sealed class CitationDialog : FluentWindow
         Content = root;
 
         FillList(null);
+        if (_list.Items.Count > 0) _list.SelectedIndex = 0;
         UpdateLabels();
         if (Doc.Sources.Items.Count == 0) Edit(null);
         Loaded += (_, _) => (Doc.Sources.Items.Count == 0 ? (Control)_authors : _list).Focus();
