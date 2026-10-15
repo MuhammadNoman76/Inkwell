@@ -445,7 +445,7 @@ public class FormatsTestsHtmlImport
         var ps = Paragraphs(r);
         Assert.Equal("Hello world again", ps[0].PlainText());
         Assert.True(ps[0].Inlines.OfType<TextRun>().Single(t => t.Text.Contains("world")).Props.Bold);
-        Assert.Equal("& <tag> café é é “q” © 2026 &unknown;  x 10 kg 😀", ps[1].PlainText());
+        Assert.Equal("& <tag> café é é “q” © 2026 &unknown;  x 10\u00A0kg 😀", ps[1].PlainText());
     }
 
     [Fact]

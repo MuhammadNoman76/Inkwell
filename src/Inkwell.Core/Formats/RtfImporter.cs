@@ -1235,13 +1235,13 @@ internal sealed class RtfConverter
                 EmitText("–");
                 return;
             case "emspace":
-                EmitText(" ");
+                EmitText("\u2003");
                 return;
             case "enspace":
-                EmitText(" ");
+                EmitText("\u2002");
                 return;
             case "qmspace":
-                EmitText(" ");
+                EmitText("\u2005");
                 return;
             case "bullet":
                 EmitText("•");
@@ -1259,25 +1259,25 @@ internal sealed class RtfConverter
                 EmitText("”");
                 return;
             case "zwj":
-                EmitText("‍");
+                EmitText("\u200D");
                 return;
             case "zwnj":
-                EmitText("‌");
+                EmitText("\u200C");
                 return;
             case "ltrmark":
-                EmitText("‎");
+                EmitText("\u200E");
                 return;
             case "rtlmark":
-                EmitText("‏");
+                EmitText("\u200F");
                 return;
             case "~":
-                EmitText(" ");
+                EmitText("\u00A0");
                 return;
             case "_":
-                EmitText("‑");
+                EmitText("\u2011");
                 return;
             case "-":
-                EmitText("­");
+                EmitText("\u00AD");
                 return;
             case "chftn":
                 FootnoteMark();

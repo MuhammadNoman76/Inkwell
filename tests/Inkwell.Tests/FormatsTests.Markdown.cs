@@ -165,7 +165,7 @@ public class FormatsTestsMarkdown
         Assert.Equal("FootnoteText", p.StyleId);
         Assert.IsType<NoteMark>(p.Inlines[0]);
         Assert.Equal("FootnoteReference", p.Inlines[0].Props.StyleId);
-        Assert.Equal(" First note.", p.PlainText().Replace("￼", ""));
+        Assert.Equal(" First note.", p.PlainText().Replace("\uFFFC", ""));
         Assert.True(p.Inlines.OfType<TextRun>().Single(r => r.Text == "note").Props.Italic);
     }
 

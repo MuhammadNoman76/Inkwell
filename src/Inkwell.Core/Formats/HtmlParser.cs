@@ -591,7 +591,7 @@ internal static class HtmlEntities
         string? result = name switch
         {
             "apos" => "'",
-            "nbsp" => " ",
+            "nbsp" => "\u00A0",
             "amp" or "AMP" => "&",
             "lt" or "LT" => "<",
             "gt" or "GT" => ">",

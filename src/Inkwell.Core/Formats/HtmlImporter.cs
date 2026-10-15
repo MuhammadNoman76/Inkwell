@@ -657,7 +657,7 @@ internal sealed class HtmlConverter
             end.Text = end.Text.TrimEnd(' ');
             if (end.Text.Length == 0) p.Inlines.RemoveAt(p.Inlines.Count - 1);
         }
-        if (p.Inlines.All(i => i is TextRun t && t.Text.All(c => c is ' ' or ' ')))
+        if (p.Inlines.All(i => i is TextRun t && t.Text.All(c => c is ' ' or '\u00A0')))
             p.Inlines.Clear();
         p.Normalize();
         _out.Add(p);
@@ -775,7 +775,7 @@ internal sealed class HtmlConverter
                 }
                 continue;
             }
-            if (c == ' ' && ((i > 0 && text[i - 1] is ' ' or ' ') || (i + 1 < text.Length && text[i + 1] is ' ' or ' ')))
+            if (c == '\u00A0' && ((i > 0 && text[i - 1] is ' ' or '\u00A0') || (i + 1 < text.Length && text[i + 1] is ' ' or '\u00A0')))
             {
                 sb.Append(KeptSpace);
                 continue;
@@ -795,7 +795,7 @@ internal sealed class HtmlConverter
             _pendingSpace = false;
         }
         var clean = Content.CleanText(text.Replace(KeptSpace, ' '));
-        if (raw) clean = clean.Replace(' ', ' ');
+        if (raw) clean = clean.Replace('\u00A0', ' ');
         Content.AppendText(p.Inlines, clean, PropsFor(run), run.Link);
         _lineStart = false;
         _emitted++;
@@ -1032,7 +1032,7 @@ internal sealed class HtmlConverter
             foreach (var c in n.Children) Walk(c);
         }
         Walk(node);
-        return sb.ToString().Replace(' ', ' ').Trim();
+        return sb.ToString().Replace('\u00A0', ' ').Trim();
     }
 
     private static readonly Regex RomanLower = new("^[ivxlcdm]+$", RegexOptions.CultureInvariant);
