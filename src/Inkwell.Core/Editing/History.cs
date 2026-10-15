@@ -167,6 +167,9 @@ public sealed class UndoStack
     public int Limit { get; set; } = 500;
 
     public bool CanUndo => _undo.Count > 0;
+
+    /// <summary>How many steps can be undone.</summary>
+    public int UndoCount => _undo.Count;
     public bool CanRedo => _redo.Count > 0;
 
     public UndoEntry? Top => _undo.Count > 0 ? _undo[_undo.Count - 1] : null;
