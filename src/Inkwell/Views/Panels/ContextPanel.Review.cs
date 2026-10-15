@@ -36,7 +36,7 @@ public sealed partial class ContextPanel
     private void BuildReview()
     {
         var track = Section("Track changes", "When on, every insertion, deletion and formatting change is marked with your name, for others to accept or reject.");
-        track.Children.Add(Switch("Track changes", Editor.TrackChanges, on => Editor.SetTrackChanges(on), "Ctrl+Shift+E"));
+        track.Children.Add(Switch("Track changes", Editor.TrackChanges, on => Editor.SetTrackChanges(on), Shortcuts.TrackChanges.Text));
         var view = new ComboBox { Width = 170, HorizontalAlignment = HorizontalAlignment.Left };
         var views = new[] { (RevisionView.AllMarkup, "All markup"), (RevisionView.Simple, "Simple markup"), (RevisionView.NoMarkup, "No markup"), (RevisionView.Original, "Original") };
         foreach (var v in views) view.Items.Add(v.Item2);
@@ -74,8 +74,8 @@ public sealed partial class ContextPanel
         var all = Doc.Comments.ToList();
         var roots = all.Where(c => c.ParentId == null || all.All(x => x.Id != c.ParentId)).ToList();
         var open = roots.Count(c => !c.Done);
-        var comments = Section("Comments", roots.Count == 0 ? "No comments. Select text and press Ctrl+Alt+M to add one." : $"{open} open, {roots.Count - open} resolved.");
-        comments.Children.Add(Command("New comment", "Icon.CommentAdd", _editor.AddComment, "Ctrl+Alt+M"));
+        var comments = Section("Comments", roots.Count == 0 ? $"No comments. Select text and press {Shortcuts.Comment.Text} to add one." : $"{open} open, {roots.Count - open} resolved.");
+        comments.Children.Add(Command("New comment", "Icon.CommentAdd", _editor.AddComment, Shortcuts.Comment.Text));
         if (roots.Any(c => c.Done))
         {
             var toggle = new CheckBox { Content = "Show resolved comments", IsChecked = _showResolved, Margin = new Thickness(0, 6, 0, 6) };
@@ -239,7 +239,7 @@ public sealed partial class ContextPanel
         if (ReferenceEquals(_editingComment, comment))
         {
             var box = new TextBox { Text = comment.Text, AcceptsReturn = true, TextWrapping = TextWrapping.Wrap, MinHeight = 60, Margin = new Thickness(0, 8, 0, 0) };
-            Ui.SetPlaceholder(box, "Write a comment… (Ctrl+Enter to post)");
+            Ui.SetPlaceholder(box, $"Write a comment… ({Shortcuts.Local.PostComment.Text} to post)");
             AutomationProperties.SetName(box, "Comment text");
             var row = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 6, 0, 0) };
             var post = new Button { Content = "Post", Padding = new Thickness(14, 3, 14, 4) };
@@ -327,7 +327,7 @@ public sealed partial class ContextPanel
         }
         var actions = Section("Tidy up", directCount == 0 ? "No direct formatting here: it all comes from the style." : null);
         actions.Children.Add(Commands(1,
-            Command("Clear character formatting", "Icon.TextClearFormatting", Editor.ClearCharacterFormatting, "Ctrl+Space"),
+            Command("Clear character formatting", "Icon.TextClearFormatting", Editor.ClearCharacterFormatting, Shortcuts.ClearCharacterFormatting.Text),
             Command("Clear all formatting (back to the style)", "Icon.TextClearFormatting", Editor.ClearFormatting),
             Command("Update the style to match this", "Icon.TextEditStyle", Editor.UpdateStyleFromSelection)));
 

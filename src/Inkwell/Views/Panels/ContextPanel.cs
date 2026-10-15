@@ -390,12 +390,7 @@ public sealed partial class ContextPanel : Border
         flow.Children.Add(Switch("No single lines at a page edge", rp.WidowControl, on => Editor.SetWidowControl(on), "Widow and orphan control"));
     }
 
-    private void AskStartNumber()
-    {
-        var answer = InputDialog.Ask(_editor.Window, "Start numbering at", "The number this item gets (the rest of the list follows on).", "1", "Set");
-        if (answer != null && int.TryParse(answer.Trim(), NumberStyles.Integer, CultureInfo.CurrentCulture, out var n) && n >= 0 && n < 32768)
-            _editor.Run(() => Editor.RestartNumbering(n));
-    }
+    private void AskStartNumber() => _editor.AskStartNumber();
 
     // ------------------------------------------------------------------ designs
 
@@ -435,7 +430,7 @@ public sealed partial class ContextPanel : Border
             };
             designs.Children.Add(card);
         }
-        designs.Children.Add(Note("Your own changes to individual paragraphs stay; Ctrl+Z goes back to the previous design."));
+        designs.Children.Add(Note($"Your own changes to individual paragraphs stay; {Shortcuts.Undo.Text} goes back to the previous design."));
     }
 }
 
@@ -451,8 +446,8 @@ public sealed partial class ContextPanel
         }));
         if (kind == null) return;
         list.Children.Add(Commands(2,
-            Command("Level down", "Icon.TextIndentIncreaseLtr", () => Editor.Indent(true), "Tab at the start of the item"),
-            Command("Level up", "Icon.TextIndentDecreaseLtr", () => Editor.Indent(false), "Shift+Tab")));
+            Command("Level down", "Icon.TextIndentIncreaseLtr", () => Editor.Indent(true), Shortcuts.Document.Tab.Text + " at the start of the item"),
+            Command("Level up", "Icon.TextIndentDecreaseLtr", () => Editor.Indent(false), Shortcuts.Document.ShiftTab.Text)));
         if (kind != "number") return;
         var buttons = new List<Button> { Command("Restart at 1", "Icon.TextNumberListLtr", () => Editor.RestartNumbering(1), "This item starts a new list at 1") };
         if (Editor.CanContinueNumbering())

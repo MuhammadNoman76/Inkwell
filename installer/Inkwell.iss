@@ -8,7 +8,7 @@
 
 #define AppName "Inkwell"
 #ifndef AppVersion
-  #define AppVersion "1.0.0"
+  #define AppVersion "1.0.1"
 #endif
 #ifndef Edition
   #define Edition "x64"

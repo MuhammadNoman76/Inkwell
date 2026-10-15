@@ -5,7 +5,7 @@ using System.Windows.Threading;
 namespace Inkwell.Services;
 
 /// <summary>
-/// Automatic updates (same scheme as VibePlayer and PawSip): a quiet check about 10 s after start-up and
+/// Automatic updates: a quiet check about 10 s after start-up and
 /// then at most once a day, an offer in the main window when a newer version is out, and "Update now" =
 /// download, verify size and SHA-256, run the installer silently, restart. Failed checks stay silent.
 /// </summary>

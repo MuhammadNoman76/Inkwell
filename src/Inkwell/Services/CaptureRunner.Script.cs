@@ -381,7 +381,7 @@ internal static partial class CaptureRunner
                 var b = new DocBuilder(Core.Templates.DocumentDesigns.Default);
                 b.Heading(1, "Proofreading");
                 b.P("Thsi sentense has a cuple of mistakes that Windows' spell checker finds as you type.");
-                b.P("Right-click a marked word for suggestions, or press F7 to go to the next one.");
+                b.P($"Right-click a marked word for suggestions, or press {Shortcuts.CheckSpelling.Text} to go to the next one.");
                 var view = Open(window, b.Doc);
                 await Settle(2500);
                 view.DocumentView.Redraw();
@@ -391,6 +391,19 @@ internal static partial class CaptureRunner
             }
 
             if (mode == AppTheme.Light && Wanted(only, "smoke")) await Smoke(window);
+            if (mode == AppTheme.Light && Wanted(only, "fit")) await Fit(window);
+            if (mode == AppTheme.Light && Wanted(only, "scope"))
+            {
+                // How this copy was installed, as the updater sees it (for checking a test install).
+                File.WriteAllLines(Path.Combine(s_folder, "scope.txt"), new[]
+                {
+                    "version " + Updater.CurrentVersionText,
+                    "edition " + Updater.Edition,
+                    "folder " + Updater.AppDirectory,
+                    "scope " + Updater.DetectInstallScope(),
+                    "installer arguments " + Updater.InstallerArguments(Updater.DetectInstallScope()),
+                });
+            }
 
             foreach (var w in Application.Current.Windows.OfType<MainWindow>().ToList())
             {
@@ -448,12 +461,239 @@ internal static partial class CaptureRunner
             await window.OpenFileAsync(txt);
             Check("open text", window.Editor!.Session.Document.Body.Paragraphs.Count() >= 2);
             window.Editor!.Session.MarkSaved(window.Editor.Editor.History.Version);
+
+            // Messages belong to the view they were shown in.
+            var tv = window.Editor!;
+            tv.SetFocusMode(true);
+            Check("focus mode shows its message", window.MessageShowing);
+            tv.SetFocusMode(false);
+            Check("leaving focus mode removes the message", !window.MessageShowing);
+            window.ShowMessage("A message about page view.", 10);
+            tv.SetViewMode(ViewMode.Pageless);
+            Check("pageless view removes a message", !window.MessageShowing);
+            tv.SetViewMode(ViewMode.Pages);
+
+            // A correction made by Enter: chip, and one undo puts back what was typed and keeps the new paragraph.
+            var ac = Open(window, Core.Templates.TemplateCatalog.Find("blank")!.Build(false));
+            await Settle(300);
+            ac.TypeForTest("so i\n");
+            var paras = ac.Session.Document.Body.Paragraphs.Select(p => p.Text).ToList();
+            Check("autocorrect by Enter", paras.Count == 2 && paras[0].EndsWith(" I", StringComparison.Ordinal) && ac.AutoCorrectChipShowing, string.Join(" | ", paras));
+            ac.Undo();
+            paras = ac.Session.Document.Body.Paragraphs.Select(p => p.Text).ToList();
+            Check("one undo after Enter puts back what was typed", paras.Count == 2 && paras[0].EndsWith(" i", StringComparison.Ordinal), string.Join(" | ", paras));
+
+            // "Stop doing this" on a Markdown chip, then the switch in Settings turns it back on.
+            var md2 = Open(window, Core.Templates.TemplateCatalog.Find("blank")!.Build(false));
+            await Settle(300);
+            md2.TypeForTest("# ");
+            var first = md2.Session.Document.Body.Paragraphs.First();
+            Check("Markdown heading", first.Props.StyleId == "Heading1" && md2.AutoCorrectChipShowing);
+            md2.StopAutoCorrectRuleForTest();
+            var rule = Core.Editing.AutoCorrectRules.MarkdownBlocks;
+            Check("Stop doing this turns the rule off", !Core.Editing.AutoCorrectRules.IsOn(AppSettings.Current.DisabledAutoCorrect, rule) && md2.Session.Document.Body.Paragraphs.First().Text == "# ");
+            var settings = new SettingsWindow { Owner = window, ShowActivated = false, WindowStartupLocation = WindowStartupLocation.Manual };
+            MoveOffscreen(settings);
+            settings.Show();
+            MoveOffscreen(settings);
+            await Settle(400);
+            var name = Core.Editing.AutoCorrectRules.NameOf(rule);
+            var toggle = FindChild<System.Windows.Controls.CheckBox>(settings, c => System.Windows.Automation.AutomationProperties.GetName(c) == name);
+            Check("Settings shows the rule, switched off", toggle is { IsChecked: false });
+            if (toggle != null)
+            {
+                toggle.IsChecked = true;
+                toggle.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent, toggle));
+            }
+            Check("the switch turns it back on", Core.Editing.AutoCorrectRules.IsOn(AppSettings.Current.DisabledAutoCorrect, rule));
+            // And a change made elsewhere shows in the open window.
+            AppSettings.Update(s => Core.Editing.AutoCorrectRules.SetOn(s.DisabledAutoCorrect, Core.Editing.AutoCorrectRules.Ellipsis, false));
+            await Settle(200);
+            var ellipsis = FindChild<System.Windows.Controls.CheckBox>(settings, c => System.Windows.Automation.AutomationProperties.GetName(c) == Core.Editing.AutoCorrectRules.NameOf(Core.Editing.AutoCorrectRules.Ellipsis));
+            Check("Settings follows changes made elsewhere", ellipsis is { IsChecked: false });
+            AppSettings.Update(s => Core.Editing.AutoCorrectRules.SetOn(s.DisabledAutoCorrect, Core.Editing.AutoCorrectRules.Ellipsis, true));
+            settings.Close();
+            md2.TypeForTest("\n# ");
+            Check("the Markdown shortcut works again", md2.Session.Document.Body.Paragraphs.Last().Props.StyleId == "Heading1");
+            md2.Session.MarkSaved(md2.Editor.History.Version);
         }
         catch (Exception ex)
         {
             results.Add("FAIL exception — " + ex);
         }
         File.WriteAllLines(Path.Combine(s_folder, "smoke.txt"), results);
+    }
+
+    /// <summary>
+    /// The command bar at every common width from below the narrowest window to 4K: nothing overflows and no text is
+    /// cut off. The same check runs over the panel, the status bar and the dialogs at the narrowest window. Results
+    /// in fit.txt, pictures of the command bar in bar-&lt;width&gt;.png.
+    /// </summary>
+    private static async Task Fit(MainWindow window)
+    {
+        var results = new List<string>();
+        void Check(string name, bool ok, string detail = "") => results.Add((ok ? "PASS " : "FAIL ") + name + (detail.Length > 0 ? " — " + detail : ""));
+        try
+        {
+            var doc = DemoDocuments.Report();
+            var path = Path.Combine(s_scratch, "Harbour Light annual report for the members' meeting.docx");
+            DocumentFiles.SaveDocx(doc, path, embedFonts: false);
+            await window.OpenFileAsync(path);
+            var view = window.Editor!;
+            await Settle(500);
+            GoToText(view, "Harbour Light finished");
+            foreach (var width in new[] { 940, 980, 1024, 1100, 1180, 1280, 1366, 1440, 1536, 1600, 1720, 1920, 2560, 3840 })
+            {
+                view.Width = width; // laid out at this width even beyond the window (the window stays off screen)
+                view.UpdateLayout();
+                view.FitCommandBar();
+                await Settle(150);
+                view.CommandBar.UpdateLayout();
+                view.FormatBar.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+                var overflow = view.FormatBar.DesiredSize.Width - view.BarScroller.ActualWidth;
+                var cut = ClippedText(view.CommandBar).Where(p => p.StartsWith("cut", StringComparison.Ordinal)).ToList();
+                Check($"command bar at {width}", overflow <= 0.5 && cut.Count == 0, $"level {view.CommandBarLevel}" + (overflow > 0.5 ? $", {overflow:0} px too wide" : "") + (cut.Count > 0 ? ", " + string.Join("; ", cut) : ""));
+                SaveElement(view.CommandBar, $"bar-{width:0000}", 1);
+                if (width == 980) SaveElement(view.CommandBar, "bar-0980-150pct", 1.5);
+            }
+            view.Width = double.NaN;
+
+            // The narrowest window, with each panel.
+            window.Width = window.MinWidth;
+            await Settle(400);
+            void Scan(string what, FrameworkElement root)
+            {
+                var problems = ClippedText(root);
+                Check(what + " at the narrowest window", !problems.Any(p => p.StartsWith("cut", StringComparison.Ordinal)), string.Join("; ", problems));
+            }
+            foreach (var mode in new[] { PanelMode.Format, PanelMode.Page, PanelMode.Review, PanelMode.Reveal, PanelMode.Design })
+            {
+                view.ShowPanel(mode);
+                await Settle(400);
+                Scan("panel: " + mode, view.Panel);
+            }
+            GoToText(view, "Used locally");
+            view.ShowPanel(PanelMode.Auto);
+            await Settle(400);
+            Scan("panel: table", view.Panel);
+            var drawing = view.Session.Document.Body.Paragraphs.SelectMany(p => p.Inlines).OfType<DrawingObject>().First(d => d.IsFloating);
+            view.DocumentView.SelectDrawing(drawing);
+            view.ShowPanel(PanelMode.Picture);
+            await Settle(400);
+            Scan("panel: picture", view.Panel);
+            view.DocumentView.SelectDrawing(null);
+            Scan("status bar", view.StatusBar);
+            Scan("outline", view.Outline);
+            SaveElement((FrameworkElement)window.Content, "narrowest-window", 1);
+            view.Session.MarkSaved(view.Editor.History.Version);
+
+            window.ShowStartView();
+            await Settle(500);
+            Scan("start screen", window.Start!);
+
+            async Task Dialog(string name, Window dialog, double? width = null)
+            {
+                dialog.WindowStartupLocation = WindowStartupLocation.Manual;
+                MoveOffscreen(dialog);
+                if (width != null) dialog.Width = width.Value;
+                dialog.Show();
+                MoveOffscreen(dialog);
+                await Settle(600);
+                if (dialog.Content is FrameworkElement content) Scan(name, content);
+                if (dialog.Content is FrameworkElement shown) SaveElement(shown, "narrow-" + name, 1);
+                dialog.Close();
+                await Settle(200);
+            }
+            var settingsWindow = new SettingsWindow { Owner = window, ShowActivated = false };
+            await Dialog("settings", settingsWindow, settingsWindow.MinWidth);
+            var essay = Open(window, DemoDocuments.Essay());
+            await Settle(400);
+            await Dialog("export", new Views.Dialogs.ExportDialog(essay, null) { Owner = window, ShowActivated = false });
+            await Dialog("citations", new Views.Dialogs.CitationDialog(essay, true) { Owner = window, ShowActivated = false });
+            essay.Session.MarkSaved(essay.Editor.History.Version);
+            window.Width = 1440;
+        }
+        catch (Exception ex)
+        {
+            results.Add("FAIL exception — " + ex);
+        }
+        File.WriteAllLines(Path.Combine(s_folder, "fit.txt"), results);
+    }
+
+    /// <summary>
+    /// Text that doesn't fit: "cut" when it is clipped (by its own width or a parent's), "trimmed" when it ends in an
+    /// ellipsis by design (document and font names).
+    /// </summary>
+    private static List<string> ClippedText(FrameworkElement root)
+    {
+        var problems = new List<string>();
+        root.UpdateLayout();
+        foreach (var tb in Descendants<System.Windows.Controls.TextBlock>(root))
+        {
+            if (!tb.IsVisible || tb.ActualWidth <= 0 || string.IsNullOrEmpty(tb.Text) || tb.TextWrapping != TextWrapping.NoWrap) continue;
+            var arranged = tb.ActualWidth;
+            tb.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+            var natural = tb.DesiredSize.Width - tb.Margin.Left - tb.Margin.Right; // the desired size includes the margin
+            tb.InvalidateMeasure();
+            if (natural > arranged + 0.5)
+            {
+                problems.Add((tb.TextTrimming == TextTrimming.None ? "cut" : "trimmed") + $" \"{tb.Text}\" ({natural:0} px in {arranged:0}, {Where(tb)})");
+                continue;
+            }
+            // Clipped by a parent that got less room than it wanted.
+            for (DependencyObject? a = tb; a != null && !ReferenceEquals(a, root); a = VisualTreeHelper.GetParent(a))
+            {
+                if (a is not FrameworkElement fe || fe.ActualWidth <= 0) continue;
+                var clip = System.Windows.Controls.Primitives.LayoutInformation.GetLayoutClip(fe)?.Bounds ?? (fe.ClipToBounds ? new Rect(fe.RenderSize) : (Rect?)null);
+                if (clip == null) continue;
+                var box = tb.TransformToAncestor(fe).TransformBounds(new Rect(tb.RenderSize));
+                if (box.Right > clip.Value.Right + 0.5 || box.Left < clip.Value.Left - 0.5)
+                {
+                    problems.Add($"cut \"{tb.Text}\" by {fe.GetType().Name} {Where(fe)}");
+                    break;
+                }
+            }
+        }
+        root.UpdateLayout();
+        return problems;
+    }
+
+    private static string Where(DependencyObject d)
+    {
+        for (var a = d; a != null; a = VisualTreeHelper.GetParent(a))
+        {
+            if (a is FrameworkElement { Name.Length: > 0 } named) return named.Name;
+            var automation = System.Windows.Automation.AutomationProperties.GetName(a);
+            if (!string.IsNullOrEmpty(automation)) return automation;
+        }
+        return "?";
+    }
+
+    private static IEnumerable<T> Descendants<T>(DependencyObject root) where T : DependencyObject
+    {
+        for (var i = 0; i < VisualTreeHelper.GetChildrenCount(root); i++)
+        {
+            var child = VisualTreeHelper.GetChild(root, i);
+            if (child is T t) yield return t;
+            foreach (var d in Descendants<T>(child)) yield return d;
+        }
+    }
+
+    /// <summary>A picture of one of our own elements (at 1.5 the pixels a 150 % display would show).</summary>
+    private static void SaveElement(FrameworkElement element, string name, double scale)
+    {
+        if (element.ActualWidth <= 0 || element.ActualHeight <= 0) return;
+        var rtb = new RenderTargetBitmap((int)Math.Ceiling(element.ActualWidth * scale), (int)Math.Ceiling(element.ActualHeight * scale), 96 * scale, 96 * scale, PixelFormats.Pbgra32);
+        // Through a brush: rendering the element itself would include its offset in the window.
+        var visual = new DrawingVisual();
+        using (var dc = visual.RenderOpen()) dc.DrawRectangle(new VisualBrush(element), null, new Rect(element.RenderSize));
+        rtb.Render(visual);
+        var bitmap = Flatten(rtb);
+        var path = Path.Combine(s_folder, name + ".png");
+        var encoder = new PngBitmapEncoder();
+        encoder.Frames.Add(BitmapFrame.Create(bitmap));
+        using (var fs = File.Create(path)) encoder.Save(fs);
+        s_written.Add(path);
     }
 
     private static void GoToText(EditorView view, string text)

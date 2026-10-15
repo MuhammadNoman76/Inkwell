@@ -292,19 +292,32 @@ internal static class Native
         }
     }
 
-    [DllImport("kernel32.dll")]
-    private static extern uint SetThreadExecutionState(uint flags);
+    // ---------------------------------------------------------------- keyboard layout
 
-    /// <summary>Keeps the screen on (and the PC awake) while presenting.</summary>
-    public static void KeepDisplayOn(bool on)
+    [DllImport("user32.dll")]
+    private static extern IntPtr GetKeyboardLayout(uint threadId);
+
+    [DllImport("user32.dll", EntryPoint = "MapVirtualKeyExW")]
+    private static extern uint MapVirtualKeyEx(uint code, uint mapType, IntPtr layout);
+
+    /// <summary>
+    /// What a key is labelled with on the keyboard layout in use (the character it types without Shift, as a
+    /// capital), e.g. "=" for the key right of 0 on a US keyboard and "+" for the same key code on a German one.
+    /// Null when the layout has no character for it.
+    /// </summary>
+    public static string? KeyLabel(System.Windows.Input.Key key)
     {
-        const uint ES_CONTINUOUS = 0x80000000, ES_SYSTEM_REQUIRED = 0x1, ES_DISPLAY_REQUIRED = 0x2;
         try
         {
-            SetThreadExecutionState(on ? ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED : ES_CONTINUOUS);
+            var vk = System.Windows.Input.KeyInterop.VirtualKeyFromKey(key);
+            if (vk == 0) return null;
+            const uint MAPVK_VK_TO_CHAR = 2;
+            var ch = (char)(MapVirtualKeyEx((uint)vk, MAPVK_VK_TO_CHAR, GetKeyboardLayout(0)) & 0x7FFFFFFF); // the top bit marks a dead key
+            return ch < ' ' || char.IsWhiteSpace(ch) ? null : char.ToUpperInvariant(ch).ToString();
         }
         catch
         {
+            return null;
         }
     }
 

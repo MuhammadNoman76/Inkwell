@@ -155,7 +155,7 @@ public static class CrossReferenceDialog
 {
     public static (Paragraph Target, string Show)? Show(Window owner, IReadOnlyList<(string Kind, string Text, Paragraph Para)> targets)
     {
-        var dialog = new InkDialog("Insert cross-reference", "The reference updates when the target moves or is renumbered (F9 updates every field).", 520);
+        var dialog = new InkDialog("Insert cross-reference", $"The reference updates when the target moves or is renumbered ({Shortcuts.UpdateFields.Text} updates every field).", 520);
         dialog.Label("Refer to", 4);
         var list = new ListBox { Height = 220 };
         AutomationProperties.SetName(list, "Targets");

@@ -47,6 +47,12 @@ public partial class EditorView
 
     internal void CloseSlashMenuForTest() => CloseSlashMenu();
 
+    /// <summary>The autocorrect chip ("Undo · Stop doing this") is showing.</summary>
+    internal bool AutoCorrectChipShowing => _autoCorrectChip != null;
+
+    /// <summary>The chip's "Stop doing this", as a click runs it.</summary>
+    internal void StopAutoCorrectRuleForTest() => StopAutoCorrectRule();
+
     /// <summary>Keeps version history in another folder (the capture mode never touches the real one).</summary>
     internal static void UseHistoryRoot(string folder) => s_history = new Core.IO.VersionHistory(folder, new Core.IO.VersionHistoryOptions()) { OnError = Services.Log.Error };
 }

@@ -216,7 +216,7 @@ public partial class EditorView
                 items.Add(item);
             }
             items.Add(Item("Ignore", null, () => IgnoreWord(error.Word)));
-            items.Add(Item("Add to dictionary", "Icon.BookAdd", () => AddToDictionary(error.Word, error.Language)));
+            items.Add(Item("Add to dictionary", "Icon.Book", () => AddToDictionary(error.Word, error.Language)));
             items.Add(new Separator());
         }
 
@@ -228,14 +228,14 @@ public partial class EditorView
             items.Add(Item("Picture options…", "Icon.Image", () => ShowPanel(PanelMode.Picture)));
             if (drawing.IsFloating)
                 items.Add(Item(drawing.Float?.Locked == true ? "Unlock position" : "Lock position", "Icon.LockClosed", () => Run(() => Editor.SetDrawingLocked(drawing, drawing.Float?.Locked != true))));
-            items.Add(Item("Alt text…", "Icon.TextDescription", () => EditAltText(drawing)));
-            items.Add(Item("Cut", "Icon.Cut", Cut, "Ctrl+X"));
-            items.Add(Item("Copy", "Icon.Copy", Copy, "Ctrl+C"));
+            items.Add(Item("Alt text…", "Icon.ImageAltText", () => EditAltText(drawing)));
+            items.Add(Item("Cut", "Icon.Cut", Cut, Shortcuts.Cut));
+            items.Add(Item("Copy", "Icon.Copy", Copy, Shortcuts.Copy));
             items.Add(Item("Delete picture", "Icon.Delete", () =>
             {
                 Run(() => Editor.DeleteDrawing(drawing));
                 Doc.SelectDrawing(null);
-            }, "Del"));
+            }, Shortcuts.Document.Delete));
             menu.IsOpen = true;
             return;
         }
@@ -259,10 +259,10 @@ public partial class EditorView
             items.Add(new Separator());
         }
 
-        items.Add(Item("Cut", "Icon.Cut", Cut, "Ctrl+X", HasSelection));
-        items.Add(Item("Copy", "Icon.Copy", Copy, "Ctrl+C", HasSelection));
-        items.Add(Item("Paste", "Icon.ClipboardPaste", () => Paste(PasteMode.Default), "Ctrl+V"));
-        items.Add(Item("Paste text only", "Icon.ClipboardText", () => Paste(PasteMode.TextOnly), "Ctrl+Shift+V"));
+        items.Add(Item("Cut", "Icon.Cut", Cut, Shortcuts.Cut, HasSelection));
+        items.Add(Item("Copy", "Icon.Copy", Copy, Shortcuts.Copy, HasSelection));
+        items.Add(Item("Paste", "Icon.ClipboardPaste", () => Paste(PasteMode.Default), Shortcuts.Paste));
+        items.Add(Item("Paste text only", "Icon.ClipboardText", () => Paste(PasteMode.TextOnly), Shortcuts.PasteTextOnly));
         items.Add(new Separator());
 
         // Tables.
@@ -282,19 +282,28 @@ public partial class EditorView
         {
             items.Add(Item("Restart numbering at 1", "Icon.TextNumberListLtr", () => Run(() => Editor.RestartNumbering(1))));
             if (Editor.CanContinueNumbering()) items.Add(Item("Continue from the list above", "Icon.TextNumberListLtr", () => Run(Editor.ContinueNumbering)));
+            items.Add(Item("Start at…", "Icon.TextNumberListLtr", AskStartNumber));
             items.Add(new Separator());
         }
 
-        items.Add(Item("Add comment", "Icon.CommentAdd", AddComment, "Ctrl+Alt+M"));
-        items.Add(Item(link != null ? "Edit link…" : "Link…", "Icon.Link", InsertLink, "Ctrl+Shift+K"));
-        items.Add(Item("Reveal formatting", "Icon.TextEffects", () => ShowPanel(PanelMode.Reveal), "Shift+F1"));
+        items.Add(Item("Add comment", "Icon.CommentAdd", AddComment, Shortcuts.RightToLeft));
+        items.Add(Item(link != null ? "Edit link…" : "Link…", "Icon.Link", InsertLink, Shortcuts.Link));
+        items.Add(Item("Reveal formatting", "Icon.TextEffects", () => ShowPanel(PanelMode.Reveal), Shortcuts.RevealFormatting));
         items.Add(Item("Clear formatting", "Icon.TextClearFormatting", () => Run(Editor.ClearFormatting)));
         menu.IsOpen = true;
     }
 
-    private MenuItem Item(string header, string? icon, Action action, string? gesture = null, bool enabled = true)
+    /// <summary>"Start at…" for a numbered list item: asks for the number (the panel, the right-click menu and the palette).</summary>
+    public void AskStartNumber()
     {
-        var item = new MenuItem { Header = header, InputGestureText = gesture ?? "", IsEnabled = enabled };
+        var answer = InputDialog.Ask(_window, "Start numbering at", "The number this item gets (the rest of the list follows on).", "1", "Set");
+        if (answer != null && int.TryParse(answer.Trim(), NumberStyles.Integer, CultureInfo.CurrentCulture, out var n) && n >= 0 && n < 32768)
+            Run(() => Editor.RestartNumbering(n));
+    }
+
+    private MenuItem Item(string header, string? icon, Action action, KeyChord? gesture = null, bool enabled = true)
+    {
+        var item = new MenuItem { Header = header, InputGestureText = gesture?.Text ?? "", IsEnabled = enabled };
         if (icon != null && TryFindResource(icon) is Geometry g) Ui.SetIcon(item, g);
         item.Click += (_, _) =>
         {

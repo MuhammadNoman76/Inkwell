@@ -48,6 +48,7 @@ public partial class MainWindow
 
     public void ShowStartView()
     {
+        HideMessage(); // messages are about the view they were shown in
         if (_editor != null)
         {
             _editor.Detach();
@@ -62,6 +63,7 @@ public partial class MainWindow
 
     public void ShowEditor(DocumentSession session)
     {
+        HideMessage();
         _editor?.Detach();
         _editor = new EditorView(this, session);
         Host.Content = _editor;
@@ -184,6 +186,7 @@ public partial class MainWindow
 
     public void ShowMessage(string text, double seconds = 4, bool warning = false)
     {
+        var toast = ++_toastNumber;
         ToastText.Text = text;
         ToastIcon.Data = (System.Windows.Media.Geometry)FindResource(warning ? "Icon.Warning" : "Icon.Info");
         Toast.Visibility = Visibility.Visible;
@@ -194,11 +197,29 @@ public partial class MainWindow
         {
             _toastTimer.Stop();
             var fade = new DoubleAnimation(0, TimeSpan.FromMilliseconds(250));
-            fade.Completed += (_, _) => Toast.Visibility = Visibility.Collapsed;
+            // A newer message that came in while this one faded stays.
+            fade.Completed += (_, _) =>
+            {
+                if (toast == _toastNumber) Toast.Visibility = Visibility.Collapsed;
+            };
             Toast.BeginAnimation(OpacityProperty, fade);
         };
         _toastTimer.Start();
     }
+
+    /// <summary>Takes the message away at once: the view changed (focus mode, pageless, another document), so it no longer applies.</summary>
+    public void HideMessage()
+    {
+        _toastNumber++;
+        _toastTimer?.Stop();
+        Toast.BeginAnimation(OpacityProperty, null);
+        Toast.Visibility = Visibility.Collapsed;
+    }
+
+    /// <summary>A message is showing (checked by the capture mode).</summary>
+    public bool MessageShowing => Toast.Visibility == Visibility.Visible;
+
+    private int _toastNumber;
 
     // ------------------------------------------------------------------ closing, placement
 

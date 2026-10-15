@@ -27,11 +27,18 @@ public partial class EditorView
 
     // ------------------------------------------------------------------ app menu
 
-    private void OnMenu(object sender, RoutedEventArgs e)
+    private void OnMenu(object sender, RoutedEventArgs e) => OpenAppMenu();
+
+    /// <summary>The app menu under the logo (Alt+F from the keyboard: the first item gets the keyboard).</summary>
+    public void OpenAppMenu()
     {
         var menu = NewMenu(MenuButton);
-        menu.Items.Add(Item("New document", "Icon.DocumentAdd", () => App.Current.ShowStart(null), "Ctrl+N"));
-        menu.Items.Add(Item("Open…", "Icon.FolderOpen", OpenDocument, "Ctrl+O"));
+        menu.Opened += (_, _) =>
+        {
+            if (menu.Items.Count > 0 && menu.Items[0] is MenuItem first) first.Focus();
+        };
+        menu.Items.Add(Item("New document", "Icon.DocumentAdd", () => App.Current.ShowStart(null), Shortcuts.NewDocument));
+        menu.Items.Add(Item("Open…", "Icon.FolderOpen", OpenDocument, Shortcuts.Open));
         var recent = AppSettings.Current.Recent.Where(r => !string.Equals(r.Path, Session.FilePath, StringComparison.OrdinalIgnoreCase)).Take(5).ToList();
         if (recent.Count > 0)
         {
@@ -45,18 +52,18 @@ public partial class EditorView
             }
         }
         menu.Items.Add(new Separator());
-        menu.Items.Add(Item("Save", "Icon.Save", () => Save(), "Ctrl+S"));
-        menu.Items.Add(Item("Save as…", "Icon.SaveCopy", () => SaveAs(), "Ctrl+Shift+S"));
-        menu.Items.Add(Item("Export…", "Icon.ArrowExportLtr", () => ShowExport(null), "Ctrl+Shift+E"));
-        menu.Items.Add(Item("Print…", "Icon.Print", Print, "Ctrl+P"));
+        menu.Items.Add(Item("Save", "Icon.Save", () => Save(), Shortcuts.Save));
+        menu.Items.Add(Item("Save as…", "Icon.SaveCopy", () => SaveAs(), Shortcuts.SaveAs));
+        menu.Items.Add(Item("Export…", "Icon.ArrowExportLtr", () => ShowExport(null), Shortcuts.Export));
+        menu.Items.Add(Item("Print…", "Icon.Print", Print, Shortcuts.Print));
         menu.Items.Add(new Separator());
         menu.Items.Add(Item("Version history…", "Icon.History", ShowVersionHistory, null, Session.FilePath != null));
         menu.Items.Add(Item("Document properties…", "Icon.Info", ShowProperties));
         menu.Items.Add(Item("Start screen", "Icon.Home", GoToStart));
         menu.Items.Add(new Separator());
-        menu.Items.Add(Item("Settings", "Icon.Settings", () => SettingsWindow.ShowSingle(_window), "Ctrl+,"));
+        menu.Items.Add(Item("Settings", "Icon.Settings", () => SettingsWindow.ShowSingle(_window), Shortcuts.Settings));
         menu.Items.Add(Item("About Inkwell", "Icon.Info", () => AboutDialog.Open(_window)));
-        menu.Items.Add(Item("Close", "Icon.Dismiss", () => _window.Close(), "Ctrl+W"));
+        menu.Items.Add(Item("Close", "Icon.Dismiss", () => _window.Close(), Shortcuts.Close));
         Open(menu);
     }
 
@@ -90,9 +97,9 @@ public partial class EditorView
         if (current != null && doc.Styles.Get(current) is { } cs)
             menu.Items.Add(Item($"Update “{DocEditor.DisplayName(cs)}” to match the selection", "Icon.TextEditStyle", () => Run(Editor.UpdateStyleFromSelection)));
         menu.Items.Add(Item("Clear formatting", "Icon.TextClearFormatting", () => Run(Editor.ClearFormatting)));
-        menu.Items.Add(Item("Reveal formatting", "Icon.TextEffects", () => ShowPanel(PanelMode.Reveal), "Shift+F1"));
+        menu.Items.Add(Item("Reveal formatting", "Icon.TextEffects", () => ShowPanel(PanelMode.Reveal), Shortcuts.RevealFormatting));
         menu.Items.Add(Item("Designs…", "Icon.Color", () => ShowPanel(PanelMode.Design)));
-        menu.Items.Add(Item("More styles…", "Icon.Search", OpenPalette, "Ctrl+K"));
+        menu.Items.Add(Item("More styles…", "Icon.Search", OpenPalette, Shortcuts.CommandPalette));
         Open(menu);
     }
 
@@ -237,26 +244,26 @@ public partial class EditorView
     {
         var f = Editor.GetFormatState();
         var menu = NewMenu((FrameworkElement)sender);
-        menu.Items.Add(Check("Strikethrough", "Icon.TextStrikethrough", f.Strike == true, Editor.ToggleStrike, "Ctrl+Shift+5"));
-        menu.Items.Add(Check("Superscript", "Icon.TextSuperscript", f.Superscript == true, Editor.ToggleSuperscript, "Ctrl+Shift+="));
-        menu.Items.Add(Check("Subscript", "Icon.TextSubscript", f.Subscript == true, Editor.ToggleSubscript, "Ctrl+="));
-        menu.Items.Add(Item("Small capitals", "Icon.TextCaseTitle", Editor.ToggleSmallCaps));
-        menu.Items.Add(Item("Change case", "Icon.TextChangeCase", CycleCase, "Shift+F3"));
+        menu.Items.Add(Check("Strikethrough", "Icon.TextStrikethrough", f.Strike == true, Editor.ToggleStrike, Shortcuts.Strikethrough));
+        menu.Items.Add(Check("Superscript", "Icon.TextSuperscript", f.Superscript == true, Editor.ToggleSuperscript, Shortcuts.Superscript));
+        menu.Items.Add(Check("Subscript", "Icon.TextSubscript", f.Subscript == true, Editor.ToggleSubscript, Shortcuts.Subscript));
+        menu.Items.Add(Item("Small capitals", "Icon.TextCaseTitle", Editor.ToggleSmallCaps, Shortcuts.SmallCaps));
+        menu.Items.Add(Item("Change case", "Icon.TextChangeCase", CycleCase, Shortcuts.ChangeCase));
         menu.Items.Add(new Separator());
-        menu.Items.Add(Check("Single line spacing", "Icon.TextLineSpacing", f.Line == 240 && f.LineRule == "auto", () => Editor.SetLineSpacing(240), "Ctrl+1"));
+        menu.Items.Add(Check("Single line spacing", "Icon.TextLineSpacing", f.Line == 240 && f.LineRule == "auto", () => Editor.SetLineSpacing(240), Shortcuts.SingleSpacing));
         menu.Items.Add(Check("1.15 line spacing", "Icon.TextLineSpacing", f.Line == 276 && f.LineRule == "auto", () => Editor.SetLineSpacing(276)));
-        menu.Items.Add(Check("1.5 line spacing", "Icon.TextLineSpacing", f.Line == 360 && f.LineRule == "auto", () => Editor.SetLineSpacing(360), "Ctrl+5"));
-        menu.Items.Add(Check("Double line spacing", "Icon.TextLineSpacing", f.Line == 480 && f.LineRule == "auto", () => Editor.SetLineSpacing(480), "Ctrl+2"));
+        menu.Items.Add(Check("1.5 line spacing", "Icon.TextLineSpacing", f.Line == 360 && f.LineRule == "auto", () => Editor.SetLineSpacing(360), Shortcuts.OneAndHalfSpacing));
+        menu.Items.Add(Check("Double line spacing", "Icon.TextLineSpacing", f.Line == 480 && f.LineRule == "auto", () => Editor.SetLineSpacing(480), Shortcuts.DoubleSpacing));
         menu.Items.Add(Item(f.SpaceBefore > 0 ? "Remove space before paragraph" : "Add space before paragraph", "Icon.TextParagraph", () => Editor.SetSpacing(f.SpaceBefore > 0 ? 0 : 240, null)));
         menu.Items.Add(Item(f.SpaceAfter > 0 ? "Remove space after paragraph" : "Add space after paragraph", "Icon.TextParagraph", () => Editor.SetSpacing(null, f.SpaceAfter > 0 ? 0 : 160)));
         menu.Items.Add(new Separator());
-        menu.Items.Add(Item("Copy formatting (format painter)", "Icon.PaintBrush", StartFormatPainter, "Ctrl+Shift+C"));
-        menu.Items.Add(Item("Clear character formatting", "Icon.TextClearFormatting", Editor.ClearCharacterFormatting, "Ctrl+Space"));
+        menu.Items.Add(Item("Copy formatting (format painter)", "Icon.PaintBrush", StartFormatPainter, Shortcuts.CopyFormatting));
+        menu.Items.Add(Item("Clear character formatting", "Icon.TextClearFormatting", Editor.ClearCharacterFormatting, Shortcuts.ClearCharacterFormatting));
         menu.Items.Add(Item("Paragraph and page options…", "Icon.TextParagraph", () => ShowPanel(PanelMode.Format)));
         Open(menu);
     }
 
-    private MenuItem Check(string header, string icon, bool on, Action action, string? gesture = null)
+    private MenuItem Check(string header, string icon, bool on, Action action, KeyChord? gesture = null)
     {
         var item = Item(header, icon, action, gesture);
         item.IsCheckable = false;
@@ -269,16 +276,16 @@ public partial class EditorView
     {
         var f = Editor.GetFormatState();
         var menu = NewMenu(AlignButton);
-        menu.Items.Add(Check("Align left", "Icon.TextAlignLeft", f.Alignment is null or "left" or "start", () => Editor.SetAlignment("left"), "Ctrl+L"));
-        menu.Items.Add(Check("Centre", "Icon.TextAlignCenter", f.Alignment == "center", () => Editor.SetAlignment("center"), "Ctrl+E"));
-        menu.Items.Add(Check("Align right", "Icon.TextAlignRight", f.Alignment is "right" or "end", () => Editor.SetAlignment("right"), "Ctrl+R"));
-        menu.Items.Add(Check("Justify", "Icon.TextAlignJustify", f.Alignment is "both" or "distribute", () => Editor.SetAlignment("both"), "Ctrl+J"));
+        menu.Items.Add(Check("Align left", "Icon.TextAlignLeft", f.Alignment is null or "left" or "start", () => Editor.SetAlignment("left"), Shortcuts.AlignLeft));
+        menu.Items.Add(Check("Centre", "Icon.TextAlignCenter", f.Alignment == "center", () => Editor.SetAlignment("center"), Shortcuts.Centre));
+        menu.Items.Add(Check("Align right", "Icon.TextAlignRight", f.Alignment is "right" or "end", () => Editor.SetAlignment("right"), Shortcuts.AlignRight));
+        menu.Items.Add(Check("Justify", "Icon.TextAlignJustify", f.Alignment is "both" or "distribute", () => Editor.SetAlignment("both"), Shortcuts.Justify));
         menu.Items.Add(new Separator());
-        menu.Items.Add(Check("Right-to-left paragraph", "Icon.TextParagraphDirectionLeft", f.Rtl == true, () => Editor.SetDirection(true), "Ctrl+Alt+."));
-        menu.Items.Add(Check("Left-to-right paragraph", "Icon.TextParagraphDirectionRight", f.Rtl == false, () => Editor.SetDirection(false), "Ctrl+Alt+,"));
+        menu.Items.Add(Check("Right-to-left paragraph", "Icon.TextParagraphDirectionLeft", f.Rtl == true, () => Editor.SetDirection(true), Shortcuts.RightToLeft));
+        menu.Items.Add(Check("Left-to-right paragraph", "Icon.TextParagraphDirectionRight", f.Rtl == false, () => Editor.SetDirection(false), Shortcuts.RightToLeft));
         menu.Items.Add(new Separator());
-        menu.Items.Add(Item("Increase indent", "Icon.TextIndentIncreaseLtr", () => Editor.Indent(true), "Ctrl+M"));
-        menu.Items.Add(Item("Decrease indent", "Icon.TextIndentDecreaseLtr", () => Editor.Indent(false), "Ctrl+Shift+M"));
+        menu.Items.Add(Item("Increase indent", "Icon.TextIndentIncreaseLtr", () => Editor.Indent(true), Shortcuts.IncreaseIndent));
+        menu.Items.Add(Item("Decrease indent", "Icon.TextIndentDecreaseLtr", () => Editor.Indent(false), Shortcuts.DecreaseIndent));
         Open(menu);
     }
 
@@ -358,25 +365,25 @@ public partial class EditorView
     {
         var menu = NewMenu((FrameworkElement)sender);
         menu.Items.Add(Item("Table of contents", "Icon.TableOfContents", () => Editor.InsertTableOfContents()));
-        menu.Items.Add(Item("Footnote", "Icon.TextFootnote", () => InsertNote(NoteKind.Footnote), "Ctrl+Alt+F"));
-        menu.Items.Add(Item("Endnote", "Icon.TextFootnote", () => InsertNote(NoteKind.Endnote), "Ctrl+Alt+D"));
+        menu.Items.Add(Item("Footnote", "Icon.TextFootnote", () => InsertNote(NoteKind.Footnote), Shortcuts.RightToLeft));
+        menu.Items.Add(Item("Endnote", "Icon.TextFootnote", () => InsertNote(NoteKind.Endnote), Shortcuts.RightToLeft));
         menu.Items.Add(Item("Caption…", "Icon.TextCaption", InsertCaption));
         menu.Items.Add(Item("Cross-reference…", "Icon.Link", InsertCrossReference));
         menu.Items.Add(Item("Citation…", "Icon.BookQuestionMark", () => ShowCitations(true)));
         menu.Items.Add(Item("Bibliography", "Icon.Library", () => Editor.InsertBibliography()));
-        menu.Items.Add(Item("Bookmark…", "Icon.Bookmark", InsertBookmark, "Ctrl+Shift+F5"));
+        menu.Items.Add(Item("Bookmark…", "Icon.Bookmark", InsertBookmark, Shortcuts.Bookmark));
         menu.Items.Add(new Separator());
-        menu.Items.Add(Item("Page break", "Icon.DocumentPageBreak", () => Editor.InsertBreak(TextRun.PageBreak), "Ctrl+Enter"));
+        menu.Items.Add(Item("Page break", "Icon.DocumentPageBreak", () => Editor.InsertBreak(TextRun.PageBreak), Shortcuts.PageBreak));
         menu.Items.Add(Item("Section break (new page)", "Icon.DocumentPageBreak", () => Editor.InsertSectionBreak("nextPage")));
         menu.Items.Add(Item("Section break (same page)", "Icon.DocumentPageBreak", () => Editor.InsertSectionBreak("continuous")));
         menu.Items.Add(Item("Page numbers", "Icon.DocumentPageNumber", () => Editor.AddPageNumbers("footer", "center")));
         menu.Items.Add(Item("Header", "Icon.DocumentHeader", () => EditHeaderFooterOfCurrentPage(true)));
         menu.Items.Add(Item("Footer", "Icon.DocumentFooter", () => EditHeaderFooterOfCurrentPage(false)));
         menu.Items.Add(new Separator());
-        menu.Items.Add(Item("Date", "Icon.Calendar", () => Editor.InsertText(DateTime.Now.ToString("d MMMM yyyy", CultureInfo.CurrentCulture)), "Alt+Shift+D"));
+        menu.Items.Add(Item("Date", "Icon.Calendar", () => Editor.InsertText(DateTime.Now.ToString("d MMMM yyyy", CultureInfo.CurrentCulture)), Shortcuts.Date));
         menu.Items.Add(Item("Divider", "Icon.LineHorizontal1", Editor.InsertDivider));
         menu.Items.Add(Item("Symbol…", "Icon.Symbols", InsertSymbol));
-        menu.Items.Add(Item("Comment", "Icon.CommentAdd", AddComment, "Ctrl+Alt+M"));
+        menu.Items.Add(Item("Comment", "Icon.CommentAdd", AddComment, Shortcuts.RightToLeft));
         Open(menu);
     }
 }

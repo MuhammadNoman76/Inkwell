@@ -80,7 +80,14 @@ public partial class EditorView
 
         SizeBox.ValueChanged += size => Run(() => Editor.SetFontSize(size));
         PreviewKeyDown += OnPreviewKey;
-        CommandBar.SizeChanged += (_, _) => Dispatcher.BeginInvoke(new Action(FitCommandBar), DispatcherPriority.Loaded);
+        ApplyShortcutTips();
+        BuildPaletteButton();
+        CommandBar.SizeChanged += (_, _) => ScheduleFit();
+        BarLeft.SizeChanged += (_, e) => { if (e.WidthChanged) ScheduleFit(); };
+        FormatBar.SizeChanged += (_, e) => { if (e.WidthChanged) ScheduleFit(); };
+        StatusBar.SizeChanged += (_, _) => ScheduleStatusFit();
+        foreach (var part in new FrameworkElement[] { PageStatus, WordStatus, GoalText, TrackStatus, LanguageStatus })
+            part.SizeChanged += (_, e) => { if (e.WidthChanged) ScheduleStatusFit(); };
         AllowDrop = true;
         Drop += OnDrop;
         DragOver += OnDragOver;
@@ -272,8 +279,8 @@ public partial class EditorView
             }) as Geometry);
             UndoButton.IsEnabled = Editor.History.CanUndo;
             RedoButton.IsEnabled = Editor.History.CanRedo;
-            UndoButton.ToolTip = Editor.History.UndoLabel is { } u ? $"Undo {u.ToLowerInvariant()} (Ctrl+Z)" : "Undo (Ctrl+Z)";
-            RedoButton.ToolTip = Editor.History.RedoLabel is { } r ? $"Redo {r.ToLowerInvariant()} (Ctrl+Y)" : "Redo (Ctrl+Y)";
+            UndoButton.ToolTip = Shortcuts.Tip(Editor.History.UndoLabel is { } u ? "Undo " + u.ToLowerInvariant() : "Undo", Shortcuts.Undo);
+            RedoButton.ToolTip = Shortcuts.Tip(Editor.History.RedoLabel is { } r ? "Redo " + r.ToLowerInvariant() : "Redo", Shortcuts.Redo);
             DocName.Text = Session.DisplayName;
             UpdateSaveState();
             ReviewToggle.IsChecked = Panel.Mode == PanelMode.Review;
@@ -300,9 +307,12 @@ public partial class EditorView
         if (Layout.View.Mode == ViewMode.Pageless)
         {
             PageStatus.Text = "Pageless";
+            PageStatus.ToolTip = null;
             return;
         }
-        PageStatus.Text = page == null ? "" : $"Page {page.Index + 1} of {Layout.Pages.Count}";
+        var full = page == null ? "" : $"Page {page.Index + 1} of {Layout.Pages.Count}";
+        PageStatus.Text = page != null && _statusLevel >= 3 ? $"{page.Index + 1} / {Layout.Pages.Count}" : full;
+        PageStatus.ToolTip = full.Length > 0 ? full : null;
     }
 
     private void UpdateLanguage()
@@ -381,6 +391,7 @@ public partial class EditorView
         ViewPageless.IsChecked = mode == ViewMode.Pageless;
         _updatingState = false;
         if (Doc.EditingHeaderFooter) Doc.ExitHeaderFooter();
+        _window.HideMessage(); // a message about the previous view doesn't belong to this one
         Doc.RelayoutAll();
         Doc.ScrollToCaret(center: true);
         RefreshState();
@@ -403,7 +414,8 @@ public partial class EditorView
         SetPanelVisible(!on && AppSettings.Current.ShowPanel);
         CenterLayer.CornerRadius = on ? new CornerRadius(0) : new CornerRadius(8, 8, 0, 0);
         CenterLayer.BorderThickness = on ? new Thickness(0) : new Thickness(1, 1, 1, 0);
-        if (on) _window.ShowMessage("Focus mode. Press Esc or F11 to come back.", 3);
+        if (on) _window.ShowMessage($"Focus mode. Press Esc or {Shortcuts.FocusMode.Text} to come back.", 3);
+        else _window.HideMessage();
         Doc.Redraw();
         Doc.ScrollToCaret(center: true);
         if (!MainWindow.IsTestOffscreen) Keyboard.Focus(Doc);
@@ -525,40 +537,187 @@ public partial class EditorView
 
 public partial class EditorView
 {
-    /// <summary>
-    /// Keeps the command bar on one line in narrower windows: first the quick insert buttons go (they're in the
-    /// Insert menu too), then the search box shrinks to its icon and shortcut, then the document name gets shorter.
-    /// </summary>
-    private bool _fitting;
-
-    private void FitCommandBar()
+    /// <summary>The tooltips that name a shortcut take it from <see cref="Shortcuts"/>.</summary>
+    private void ApplyShortcutTips()
     {
-        if (_fitting || CommandBar.ActualWidth <= 0) return;
-        _fitting = true;
-        try
+        MenuButton.ToolTip = Shortcuts.Tip("Menu", Shortcuts.Menu);
+        SizeBox.ToolTip = Shortcuts.Tip("Font size", Shortcuts.BiggerText, Shortcuts.SmallerText);
+        BoldToggle.ToolTip = Shortcuts.Tip("Bold", Shortcuts.Bold);
+        ItalicToggle.ToolTip = Shortcuts.Tip("Italic", Shortcuts.Italic);
+        UnderlineToggle.ToolTip = Shortcuts.Tip("Underline", Shortcuts.Underline);
+        BulletsToggle.ToolTip = Shortcuts.Tip("Bullets", Shortcuts.Bullets);
+        LinkButton.ToolTip = Shortcuts.Tip("Insert a link", Shortcuts.Link);
+        CommentButton.ToolTip = Shortcuts.Tip("Add a comment", Shortcuts.Comment);
+        PaletteButton.ToolTip = Shortcuts.Tip("Find any command, style, template or heading", Shortcuts.CommandPalette);
+        PanelToggle.ToolTip = Shortcuts.Tip("Show or hide the panel", Shortcuts.Panel);
+        ShareButton.ToolTip = Shortcuts.Tip("Export as PDF, Markdown, HTML or text, or print", Shortcuts.Export);
+        FocusToggle.ToolTip = Shortcuts.Tip("Focus mode", Shortcuts.FocusMode);
+        FitWidthButton.ToolTip = Shortcuts.Tip("Fit the page width", Shortcuts.FitPageWidth);
+        ZoomOutButton.ToolTip = Shortcuts.Tip("Zoom out", Shortcuts.ZoomOut);
+        ZoomInButton.ToolTip = Shortcuts.Tip("Zoom in", Shortcuts.ZoomIn);
+        ZoomSlider.ToolTip = "Zoom (Ctrl + mouse wheel zooms too)";
+    }
+
+    private TextBlock _paletteLabel = null!;
+    private Border _paletteBadge = null!;
+
+    /// <summary>The search box: magnifier, "Search commands" and the shortcut badge (shortened by <see cref="FitCommandBar"/>).</summary>
+    private void BuildPaletteButton()
+    {
+        var icon = new Controls.IconView { Width = 14, Height = 14, VerticalAlignment = VerticalAlignment.Center };
+        icon.SetResourceReference(Controls.IconView.DataProperty, "Icon.Search");
+        _paletteLabel = new TextBlock { Text = "Search commands", Margin = new Thickness(8, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
+        var badgeText = new TextBlock { Text = Shortcuts.CommandPalette.Text, FontSize = 11 };
+        badgeText.SetResourceReference(TextBlock.ForegroundProperty, "Text.Tertiary");
+        _paletteBadge = new Border { CornerRadius = new CornerRadius(10), Padding = new Thickness(7, 1, 7, 2), Margin = new Thickness(10, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center, Child = badgeText };
+        _paletteBadge.SetResourceReference(Border.BackgroundProperty, "Subtle.FillSecondary");
+        var stack = new StackPanel { Orientation = Orientation.Horizontal };
+        stack.Children.Add(icon);
+        stack.Children.Add(_paletteLabel);
+        stack.Children.Add(_paletteBadge);
+        PaletteButton.Content = stack;
+    }
+
+    // ------------------------------------------------------------------ fitting the command bar and the status bar
+
+    private StepFitter? _barFitter;
+    private StepFitter? _statusFitter;
+
+    private StepFitter BarFitter => _barFitter ??= new StepFitter(CommandBar, MaxCommandBarLevel, SetBarLevel, () =>
+    {
+        // The middle part scrolls sideways when it doesn't fit: that's the overflow to remove.
+        FormatBar.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        return FormatBar.DesiredSize.Width <= BarScroller.ActualWidth + 0.5;
+    });
+
+    private StepFitter StatusFitter => _statusFitter ??= new StepFitter(StatusBar, MaxStatusBarLevel, SetStatusLevel, () =>
+    {
+        StatusLeft.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        // A panel arranged narrower than it wants keeps its own width and is clipped: compare with the room it got.
+        return StatusLeft.DesiredSize.Width <= System.Windows.Controls.Primitives.LayoutInformation.GetLayoutSlot(StatusLeft).Width + 0.5;
+    });
+
+    /// <summary>How far the command bar is shortened (0 = everything shows; see <see cref="SetBarLevel"/>).</summary>
+    public int CommandBarLevel => BarFitter.Level;
+
+    public const int MaxCommandBarLevel = 8;
+
+    public const int MaxStatusBarLevel = 4;
+
+    private void ScheduleFit() => BarFitter.Schedule();
+
+    private void ScheduleStatusFit() => StatusFitter.Schedule();
+
+    /// <summary>
+    /// Keeps the command bar on one line at every window width, from the narrowest window to 4K: whole steps from
+    /// <see cref="SetBarLevel"/> until everything fits, so no label is ever cut off part-way.
+    /// </summary>
+    public void FitCommandBar() => BarFitter.Fit();
+
+    /// <summary>The same for the status bar, which gets narrow when the outline and the panel are both open.</summary>
+    public void FitStatusBar() => StatusFitter.Fit();
+
+    /// <summary>
+    /// The steps, from the full command bar to the most compact: 1 "Search" instead of "Search commands"; 2 the quick
+    /// insert buttons go (they're in the Insert menu too); 3 the search box shows its magnifier and shortcut only;
+    /// 4 a shorter document name; 5 Insert and Export become icons (their tooltips say what they are); 6 the search
+    /// box is just the magnifier (its tooltip has the shortcut); 7 the style and font boxes are as wide as their
+    /// names; 8 a shorter document name still.
+    /// </summary>
+    private void SetBarLevel(int level)
+    {
+        _paletteLabel.Text = level >= 1 ? "Search" : "Search commands";
+        _paletteLabel.Visibility = level >= 3 ? Visibility.Collapsed : Visibility.Visible;
+        _paletteBadge.Visibility = level >= 6 ? Visibility.Collapsed : Visibility.Visible;
+        _paletteBadge.Margin = new Thickness(level >= 3 ? 8 : 10, 0, 0, 0);
+        PaletteButton.Padding = level >= 6 ? new Thickness(9, 0, 9, 0) : new Thickness(12, 0, 6, 0);
+        QuickInsert.Visibility = level >= 2 ? Visibility.Collapsed : Visibility.Visible;
+        DocNamePanel.MaxWidth = level >= 8 ? 76 : level >= 4 ? 110 : 190;
+        var iconsOnly = level >= 5;
+        InsertButton.Content = iconsOnly ? "" : "Insert";
+        InsertButton.Padding = iconsOnly ? new Thickness(10, 0, 10, 0) : new Thickness(10, 0, 12, 0);
+        ShareButton.Content = iconsOnly ? "" : "Export";
+        ShareButton.Padding = iconsOnly ? new Thickness(10, 0, 10, 0) : new Thickness(10, 0, 12, 0);
+        var narrow = level >= 7;
+        StyleButton.MinWidth = narrow ? 0 : 100;
+        StyleName.MaxWidth = narrow ? 84 : 110;
+        FontButton.MinWidth = narrow ? 0 : 100;
+        FontName.MaxWidth = narrow ? 84 : 120;
+    }
+
+    private int _statusLevel;
+
+    /// <summary>
+    /// The status bar's steps: 1 the language goes; 2 the zoom slider
+    /// goes (the zoom buttons and the percentage stay); 3 "3 / 12" instead of "Page 3 of 12"; 4 the "several pages"
+    /// and "fit the page width" buttons go (the View commands in the palette have them).
+    /// </summary>
+    private void SetStatusLevel(int level)
+    {
+        _statusLevel = level;
+        LanguageStatus.Visibility = level >= 1 ? Visibility.Collapsed : Visibility.Visible;
+        ZoomSlider.Visibility = level >= 2 ? Visibility.Collapsed : Visibility.Visible;
+        UpdatePageStatus();
+        MultiPageButton.Visibility = level >= 4 ? Visibility.Collapsed : Visibility.Visible;
+        FitWidthButton.Visibility = level >= 4 ? Visibility.Collapsed : Visibility.Visible;
+    }
+
+    /// <summary>
+    /// Shortens a strip of controls in whole steps until it fits: each fit starts from the full strip, applies step 1,
+    /// 2… and stops at the first that fits. Size changes during a fit are its own and don't start another.
+    /// </summary>
+    private sealed class StepFitter
+    {
+        private readonly FrameworkElement _strip;
+        private readonly int _maxLevel;
+        private readonly Action<int> _apply;
+        private readonly Func<bool> _fits;
+        private bool _fitting;
+        private bool _queued;
+
+        public StepFitter(FrameworkElement strip, int maxLevel, Action<int> apply, Func<bool> fits)
         {
-            QuickInsert.Visibility = Visibility.Visible;
-            PaletteButton.Width = 176;
-            PaletteButton.Content = "Search commands";
-            DocNamePanel.MaxWidth = 190;
-            // The middle part scrolls sideways when it doesn't fit: that's the overflow to remove.
-            bool Fits()
-            {
-                CommandBar.UpdateLayout();
-                FormatBar.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-                return FormatBar.DesiredSize.Width <= BarScroller.ActualWidth + 0.5;
-            }
-            if (Fits()) return;
-            QuickInsert.Visibility = Visibility.Collapsed;
-            if (Fits()) return;
-            PaletteButton.Content = null;
-            PaletteButton.Width = 96;
-            if (Fits()) return;
-            DocNamePanel.MaxWidth = 110;
+            _strip = strip;
+            _maxLevel = maxLevel;
+            _apply = apply;
+            _fits = fits;
         }
-        finally
+
+        public int Level { get; private set; }
+
+        public void Schedule()
         {
-            _fitting = false;
+            if (_fitting || _queued) return;
+            _queued = true;
+            _strip.Dispatcher.BeginInvoke(new Action(() =>
+            {
+                _queued = false;
+                Fit();
+            }), DispatcherPriority.Loaded);
+        }
+
+        public void Fit()
+        {
+            if (_fitting || _strip.ActualWidth <= 0 || !_strip.IsVisible) return;
+            _fitting = true;
+            try
+            {
+                bool Fits()
+                {
+                    _strip.UpdateLayout();
+                    return _fits();
+                }
+                var level = 0;
+                _apply(level);
+                while (!Fits() && level < _maxLevel) _apply(++level);
+                Level = level;
+                // Lay out the final state now, while the size changes it causes are known to be ours.
+                _strip.UpdateLayout();
+            }
+            finally
+            {
+                _fitting = false;
+            }
         }
     }
 }

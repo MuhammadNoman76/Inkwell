@@ -155,11 +155,18 @@ public partial class EditorView
     {
         if (!AppSettings.Current.VersionHistory || AppSettings.InMemoryOnly || bytes.Length == 0) return;
         var words = Stats.Count(Session.Document).Words;
+        // The limits as they are in Settings now (they can change while Inkwell runs).
+        var settings = AppSettings.Current;
+        var maxCount = settings.HistoryPerDocument;
+        var maxBytes = (long)settings.HistoryTotalMegabytes * 1024 * 1024;
         Task.Run(() =>
         {
             try
             {
-                History.Add(path, bytes, kind, words);
+                var history = History;
+                history.Options.MaxSnapshotsPerDocument = maxCount;
+                history.Options.MaxTotalBytes = maxBytes;
+                history.Add(path, bytes, kind, words);
             }
             catch (Exception ex)
             {
@@ -184,7 +191,7 @@ public partial class EditorView
     private void AutoSaveTick()
     {
         UpdateSaveState();
-        if (!AppSettings.Current.AutoSaveFile || Session.FilePath == null || Session.Format != "docx" || !Session.IsDirty) return;
+        if (!AppSettings.Current.AutoSaveFile || Session.FilePath == null || Session.Format is not ("docx" or "docm") || !Session.IsDirty) return;
         if (_saving != null && !_saving.IsCompleted) return;
         if ((DateTime.UtcNow - _lastEdit).TotalSeconds < 3) return;
         if (Mouse.LeftButton == MouseButtonState.Pressed || _window.OwnedWindows.Count > 0 || !_window.IsLoaded) return;
@@ -212,7 +219,7 @@ public partial class EditorView
                 {
                     _autoSaveFailed = true;
                     Log.Error(t.Exception, "Automatic save " + path);
-                    _window.ShowMessage("Couldn't save automatically. Press Ctrl+S to save, or Save as to save elsewhere.", 6, warning: true);
+                    _window.ShowMessage($"Couldn't save automatically. Press {Shortcuts.Save.Text} to save, or Save as to save elsewhere.", 6, warning: true);
                     UpdateSaveState();
                     return;
                 }

@@ -21,7 +21,7 @@
 
             <!-- app menu + document name -->
             <StackPanel x:Name="BarLeft" Orientation="Horizontal" VerticalAlignment="Center">
-                <Button x:Name="MenuButton" Style="{StaticResource SubtleButton}" Padding="6,4" ToolTip="Menu (Alt+F)"
+                <Button x:Name="MenuButton" Style="{StaticResource SubtleButton}" Padding="6,4"
                         AutomationProperties.Name="Menu" Click="OnMenu">
                     <StackPanel Orientation="Horizontal">
                         <Image Width="22" Height="22" Source="{StaticResource Logo.Mark}" />
@@ -36,9 +36,9 @@
 
             <!-- undo / redo -->
             <StackPanel x:Name="BarUndo" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0,0,0">
-                <Button x:Name="UndoButton" Style="{StaticResource IconButton}" c:Ui.Icon="{StaticResource Icon.ArrowUndo}" ToolTip="Undo (Ctrl+Z)"
+                <Button x:Name="UndoButton" Style="{StaticResource IconButton}" c:Ui.Icon="{StaticResource Icon.ArrowUndo}"
                         AutomationProperties.Name="Undo" Click="OnUndo" />
-                <Button x:Name="RedoButton" Style="{StaticResource IconButton}" c:Ui.Icon="{StaticResource Icon.ArrowRedo}" ToolTip="Redo (Ctrl+Y)"
+                <Button x:Name="RedoButton" Style="{StaticResource IconButton}" c:Ui.Icon="{StaticResource Icon.ArrowRedo}"
                         AutomationProperties.Name="Redo" Click="OnRedo" />
                 <Border Width="1" Height="22" Margin="8,0,6,0" Background="{DynamicResource Divider}" />
             </StackPanel>
@@ -61,36 +61,36 @@
                         </DockPanel>
                     </Button>
                     <c:NumberBox x:Name="SizeBox" Width="58" MinWidth="50" Height="30" Margin="2,0,0,0" Minimum="1" Maximum="1638" Step="1" Decimals="1"
-                                 AutomationProperties.Name="Font size" ToolTip="Font size (Ctrl+] / Ctrl+[)" />
+                                 AutomationProperties.Name="Font size" />
                     <Border Width="1" Height="22" Margin="8,0,6,0" Background="{DynamicResource Divider}" />
-                    <ToggleButton x:Name="BoldToggle" Style="{StaticResource IconToggle}" c:Ui.Icon="{StaticResource Icon.TextBold}" ToolTip="Bold (Ctrl+B)" AutomationProperties.Name="Bold" Click="OnBold" />
-                    <ToggleButton x:Name="ItalicToggle" Style="{StaticResource IconToggle}" c:Ui.Icon="{StaticResource Icon.TextItalic}" ToolTip="Italic (Ctrl+I)" AutomationProperties.Name="Italic" Click="OnItalic" />
-                    <ToggleButton x:Name="UnderlineToggle" Style="{StaticResource IconToggle}" c:Ui.Icon="{StaticResource Icon.TextUnderline}" ToolTip="Underline (Ctrl+U)" AutomationProperties.Name="Underline" Click="OnUnderline" />
+                    <ToggleButton x:Name="BoldToggle" Style="{StaticResource IconToggle}" c:Ui.Icon="{StaticResource Icon.TextBold}" AutomationProperties.Name="Bold" Click="OnBold" />
+                    <ToggleButton x:Name="ItalicToggle" Style="{StaticResource IconToggle}" c:Ui.Icon="{StaticResource Icon.TextItalic}" AutomationProperties.Name="Italic" Click="OnItalic" />
+                    <ToggleButton x:Name="UnderlineToggle" Style="{StaticResource IconToggle}" c:Ui.Icon="{StaticResource Icon.TextUnderline}" AutomationProperties.Name="Underline" Click="OnUnderline" />
                     <Button x:Name="ColorButton" Style="{StaticResource IconButton}" c:Ui.Icon="{StaticResource Icon.TextColor}" ToolTip="Text colour and highlight" AutomationProperties.Name="Text colour and highlight" Click="OnColorMenu" />
                     <Button Style="{StaticResource IconButton}" c:Ui.Icon="{StaticResource Icon.MoreHorizontal}" ToolTip="More text formatting" AutomationProperties.Name="More text formatting" Click="OnMoreFormatMenu" />
                     <Border Width="1" Height="22" Margin="6,0,6,0" Background="{DynamicResource Divider}" />
-                    <ToggleButton x:Name="BulletsToggle" Style="{StaticResource IconToggle}" c:Ui.Icon="{StaticResource Icon.TextBulletListLtr}" ToolTip="Bullets (Ctrl+Shift+L)" AutomationProperties.Name="Bullets" Click="OnBullets" />
+                    <ToggleButton x:Name="BulletsToggle" Style="{StaticResource IconToggle}" c:Ui.Icon="{StaticResource Icon.TextBulletListLtr}" AutomationProperties.Name="Bullets" Click="OnBullets" />
                     <ToggleButton x:Name="NumbersToggle" Style="{StaticResource IconToggle}" c:Ui.Icon="{StaticResource Icon.TextNumberListLtr}" ToolTip="Numbering" AutomationProperties.Name="Numbering" Click="OnNumbers" />
                     <Button x:Name="AlignButton" Style="{StaticResource IconButton}" c:Ui.Icon="{StaticResource Icon.TextAlignLeft}" ToolTip="Alignment and direction" AutomationProperties.Name="Alignment and direction" Click="OnAlignMenu" />
                     <Border Width="1" Height="22" Margin="6,0,4,0" Background="{DynamicResource Divider}" />
                     <StackPanel x:Name="QuickInsert" Orientation="Horizontal">
                     <Button Style="{StaticResource IconButton}" c:Ui.Icon="{StaticResource Icon.ImageAdd}" ToolTip="Insert a picture (or paste / drop one)" AutomationProperties.Name="Insert picture" Click="OnInsertPicture" />
                     <Button Style="{StaticResource IconButton}" c:Ui.Icon="{StaticResource Icon.Table}" ToolTip="Insert a table" AutomationProperties.Name="Insert table" Click="OnInsertTable" />
-                    <Button Style="{StaticResource IconButton}" c:Ui.Icon="{StaticResource Icon.Link}" ToolTip="Insert a link (Ctrl+Shift+K)" AutomationProperties.Name="Insert link" Click="OnInsertLink" />
-                    <Button Style="{StaticResource IconButton}" c:Ui.Icon="{StaticResource Icon.CommentAdd}" ToolTip="Add a comment (Ctrl+Alt+M)" AutomationProperties.Name="Add comment" Click="OnInsertComment" />
+                    <Button x:Name="LinkButton" Style="{StaticResource IconButton}" c:Ui.Icon="{StaticResource Icon.Link}" AutomationProperties.Name="Insert link" Click="OnInsertLink" />
+                    <Button x:Name="CommentButton" Style="{StaticResource IconButton}" c:Ui.Icon="{StaticResource Icon.CommentAdd}" AutomationProperties.Name="Add comment" Click="OnInsertComment" />
                     </StackPanel>
-                    <Button Style="{StaticResource CommandButton}" c:Ui.Icon="{StaticResource Icon.Add}" Content="Insert" ToolTip="More things to insert" AutomationProperties.Name="Insert more" Click="OnInsertMenu" />
+                    <Button x:Name="InsertButton" Style="{StaticResource CommandButton}" c:Ui.Icon="{StaticResource Icon.Add}" Content="Insert" ToolTip="More things to insert" AutomationProperties.Name="Insert more" Click="OnInsertMenu" />
                 </StackPanel>
             </ScrollViewer>
 
             <!-- right side -->
             <StackPanel x:Name="BarRight" Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
-                <Button x:Name="PaletteButton" Style="{StaticResource PaletteButton}" Width="176" Margin="0,0,8,0" Content="Search commands"
-                        AutomationProperties.Name="Command palette" ToolTip="Find any command, style, template or heading (Ctrl+K)" Click="OnPalette" />
+                <Button x:Name="PaletteButton" Style="{StaticResource PaletteButton}" Margin="0,0,8,0"
+                        AutomationProperties.Name="Command palette" Click="OnPalette" />
                 <ToggleButton x:Name="ReviewToggle" Style="{StaticResource IconToggle}" c:Ui.Icon="{StaticResource Icon.TrackChanges}" ToolTip="Review: track changes and comments" AutomationProperties.Name="Review" Click="OnReviewToggle" />
-                <ToggleButton x:Name="PanelToggle" Style="{StaticResource IconToggle}" c:Ui.Icon="{StaticResource Icon.PanelRight}" ToolTip="Show or hide the panel (Ctrl+F1)" AutomationProperties.Name="Panel" Click="OnPanelToggle" Margin="0,0,6,0" />
+                <ToggleButton x:Name="PanelToggle" Style="{StaticResource IconToggle}" c:Ui.Icon="{StaticResource Icon.PanelRight}" AutomationProperties.Name="Panel" Click="OnPanelToggle" Margin="0,0,6,0" />
                 <Button x:Name="ShareButton" Style="{StaticResource AccentCommandButton}" c:Ui.Icon="{StaticResource Icon.Share}" Content="Export"
-                        ToolTip="Export as PDF, Markdown, HTML or text, or print" AutomationProperties.Name="Export" Click="OnExport" />
+                        AutomationProperties.Name="Export" Click="OnExport" />
             </StackPanel>
         </Grid>
 
@@ -130,18 +130,18 @@
                                                      ToolTip="Pageless view: continuous text for drafting" AutomationProperties.Name="Pageless view" GroupName="View" Checked="OnViewModeChanged" />
                                     </StackPanel>
                                 </Border>
-                                <ToggleButton x:Name="FocusToggle" Style="{StaticResource IconToggle}" Width="28" Height="26" c:Ui.Icon="{StaticResource Icon.Focus}" ToolTip="Focus mode (F11)"
+                                <ToggleButton x:Name="FocusToggle" Style="{StaticResource IconToggle}" Width="28" Height="26" c:Ui.Icon="{StaticResource Icon.Focus}"
                                               AutomationProperties.Name="Focus mode" Click="OnFocusToggle" Margin="0,0,6,0" />
                                 <Border Width="1" Height="16" Margin="0,0,6,0" Background="{DynamicResource Divider}" />
-                                <Button Style="{StaticResource IconButton}" Width="26" Height="26" c:Ui.Icon="{StaticResource Icon.DocumentMultiple}" ToolTip="Several pages side by side"
+                                <Button x:Name="MultiPageButton" Style="{StaticResource IconButton}" Width="26" Height="26" c:Ui.Icon="{StaticResource Icon.DocumentMultiple}" ToolTip="Several pages side by side"
                                         AutomationProperties.Name="Multiple pages" Click="OnMultiplePages" />
-                                <Button Style="{StaticResource IconButton}" Width="26" Height="26" c:Ui.Icon="{StaticResource Icon.PageFit}" ToolTip="Fit the page width (Ctrl+0)"
+                                <Button x:Name="FitWidthButton" Style="{StaticResource IconButton}" Width="26" Height="26" c:Ui.Icon="{StaticResource Icon.PageFit}"
                                         AutomationProperties.Name="Fit page width" Click="OnZoomFit" />
-                                <Button Style="{StaticResource IconButton}" Width="26" Height="26" c:Ui.Icon="{StaticResource Icon.ZoomOut}" ToolTip="Zoom out (Ctrl+-)"
+                                <Button x:Name="ZoomOutButton" Style="{StaticResource IconButton}" Width="26" Height="26" c:Ui.Icon="{StaticResource Icon.ZoomOut}"
                                         AutomationProperties.Name="Zoom out" Click="OnZoomOut" />
                                 <Slider x:Name="ZoomSlider" Width="96" Minimum="25" Maximum="300" Value="100" VerticalAlignment="Center" Margin="2,0"
                                         AutomationProperties.Name="Zoom" ValueChanged="OnZoomSlider" />
-                                <Button Style="{StaticResource IconButton}" Width="26" Height="26" c:Ui.Icon="{StaticResource Icon.ZoomIn}" ToolTip="Zoom in (Ctrl++)"
+                                <Button x:Name="ZoomInButton" Style="{StaticResource IconButton}" Width="26" Height="26" c:Ui.Icon="{StaticResource Icon.ZoomIn}"
                                         AutomationProperties.Name="Zoom in" Click="OnZoomIn" />
                                 <Button x:Name="ZoomText" Style="{StaticResource SubtleButton}" MinWidth="48" Height="26" Padding="4,0" FontSize="12" ToolTip="Zoom to 100 %"
                                         AutomationProperties.Name="Zoom level, click for 100 percent" Click="OnZoom100" />

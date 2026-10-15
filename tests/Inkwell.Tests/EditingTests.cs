@@ -139,6 +139,31 @@ public class EditingTests
         Assert.StartsWith(before, Para(doc, 0).Text);
     }
 
+    /// <summary>
+    /// A correction made by Enter (the editor presses Enter first, then corrects the paragraph above): one Ctrl+Z
+    /// puts back what was typed and keeps the new paragraph, as after a space; the caret stays in the new paragraph.
+    /// </summary>
+    [Fact]
+    public void AutoCorrect_ByEnter_IsOneUndoStep_AfterTheNewParagraph()
+    {
+        var (doc, editor) = New("the plan works. so i");
+        var p = Para(doc, 0);
+        editor.Selection = new Selection(new DocPos(p, p.Length));
+        var result = new AutoCorrect().Process(p.Text, p.Length, '\r', new AutoCorrectContext());
+        Assert.NotEmpty(result.Edits);
+        editor.Enter();
+        Assert.True(editor.ApplyAutoCorrect(p, result.Edits));
+        Assert.Equal(new[] { "the plan works. so I", "" }, doc.Body.Paragraphs.Select(x => x.Text).ToArray());
+        Assert.Same(Para(doc, 1), editor.Selection.Active.Para);
+        Assert.True(editor.History.Top!.IsAutomatic);
+
+        editor.Undo();
+        Assert.Equal(new[] { "the plan works. so i", "" }, doc.Body.Paragraphs.Select(x => x.Text).ToArray());
+        Assert.Same(Para(doc, 1), editor.Selection.Active.Para);
+        editor.Undo();
+        Assert.Equal(new[] { "the plan works. so i" }, doc.Body.Paragraphs.Select(x => x.Text).ToArray());
+    }
+
     [Fact]
     public void Lists_RestartAndContinue()
     {

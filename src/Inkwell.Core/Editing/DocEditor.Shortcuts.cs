@@ -5,11 +5,18 @@ namespace Inkwell.Core.Editing;
 public sealed partial class DocEditor
 {
     /// <summary>Applies autocorrect replacements in the caret's paragraph as one automatic step (one Ctrl+Z undoes it).</summary>
-    public bool ApplyAutoCorrect(IReadOnlyList<AutoCorrectEdit> edits)
+    public bool ApplyAutoCorrect(IReadOnlyList<AutoCorrectEdit> edits) => ApplyAutoCorrect(Selection.Active.Para, edits);
+
+    /// <summary>
+    /// Applies autocorrect replacements in <paramref name="p"/> as one automatic step. Used after Enter too: the new
+    /// paragraph comes first and the correction on top, so one Ctrl+Z puts back what was typed and keeps the new
+    /// paragraph (as after a space). A caret in another paragraph stays where it is.
+    /// </summary>
+    public bool ApplyAutoCorrect(Paragraph p, IReadOnlyList<AutoCorrectEdit> edits)
     {
-        if (edits.Count == 0) return false;
+        if (edits.Count == 0 || p.Parent == null || edits.Any(e => e.Start < 0 || e.End > p.Length)) return false;
         var caret = Selection.Active;
-        var p = caret.Para;
+        var caretHere = ReferenceEquals(caret.Para, p);
         return Edit("AutoCorrect: " + edits[0].RuleName, t =>
         {
             t.Touch(p);
@@ -31,7 +38,7 @@ public sealed partial class DocEditor
                 if (e.End <= offset) offset += e.Replacement.Length - e.Length;
                 else if (e.Start < offset) offset = e.Start + e.Replacement.Length;
             }
-            return new Selection(new DocPos(p, MathEx.Clamp(offset, 0, p.Length)));
+            return caretHere ? new Selection(new DocPos(p, MathEx.Clamp(offset, 0, p.Length))) : null;
         }, automatic: true);
     }
 

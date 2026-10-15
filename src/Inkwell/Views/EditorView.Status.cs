@@ -55,7 +55,7 @@ public partial class EditorView
             ? $"{sel.Words.ToString("N0", CultureInfo.CurrentCulture)} of {words} words"
             : $"{words} {(doc.Words == 1 ? "word" : "words")}";
         var reading = doc.ReadingTime;
-        WordStatus.ToolTip = $"{doc.Characters.ToString("N0", CultureInfo.CurrentCulture)} characters · about {Minutes(reading)} to read. Click for details (Ctrl+Shift+G).";
+        WordStatus.ToolTip = $"{doc.Characters.ToString("N0", CultureInfo.CurrentCulture)} characters · about {Minutes(reading)} to read. Click for details ({Shortcuts.WordCount.Text}).";
         UpdateGoal(doc.Words);
     }
 

@@ -47,9 +47,9 @@ public sealed class FindBar : Border
         AutomationProperties.SetName(_find, "Find");
         findRow.Children.Add(_find);
         findRow.Children.Add(_count);
-        findRow.Children.Add(IconButton("Icon.ArrowUp", "Previous (Shift+Enter)", () => Step(-1)));
+        findRow.Children.Add(IconButton("Icon.ArrowUp", Shortcuts.Tip("Previous", Shortcuts.Local.FindPrevious), () => Step(-1)));
         findRow.Children.Add(IconButton("Icon.ArrowDown", "Next (Enter)", () => Step(1)));
-        findRow.Children.Add(IconButton("Icon.ArrowSwap", "Replace (Ctrl+H)", () => ShowReplace(_replaceRow!.Visibility != Visibility.Visible)));
+        findRow.Children.Add(IconButton("Icon.ArrowSwap", Shortcuts.Tip("Replace", Shortcuts.Replace), () => ShowReplace(_replaceRow!.Visibility != Visibility.Visible)));
         findRow.Children.Add(IconButton("Icon.Dismiss", "Close (Esc)", Close));
         stack.Children.Add(findRow);
 
@@ -66,7 +66,7 @@ public sealed class FindBar : Border
         _replaceRow.Children.Add(_replace);
         var one = new Button { Content = "Replace", Margin = new Thickness(8, 0, 0, 0), Padding = new Thickness(10, 3, 10, 3) };
         one.Click += (_, _) => ReplaceOne();
-        var all = new Button { Content = "Replace all", Margin = new Thickness(6, 0, 0, 0), Padding = new Thickness(10, 3, 10, 3) };
+        var all = new Button { Content = "Replace all", Margin = new Thickness(6, 0, 0, 0), Padding = new Thickness(10, 3, 10, 3), ToolTip = $"Replace every match ({Shortcuts.Local.ReplaceAll.Text} in the Replace with box)" };
         all.Click += (_, _) => ReplaceAll();
         _replaceRow.Children.Add(one);
         _replaceRow.Children.Add(all);
@@ -254,7 +254,7 @@ public sealed class FindBar : Border
     {
         var n = 0;
         _editor.Run(() => n = FindReplace.ReplaceAll(_editor.Editor, _find.Text, _replace.Text, Options));
-        _editor.Window.ShowMessage(n == 0 ? "Nothing to replace." : $"Replaced {n.ToString("N0", CultureInfo.CurrentCulture)} {(n == 1 ? "time" : "times")}. Ctrl+Z undoes them all.", 4);
+        _editor.Window.ShowMessage(n == 0 ? "Nothing to replace." : $"Replaced {n.ToString("N0", CultureInfo.CurrentCulture)} {(n == 1 ? "time" : "times")}. {Shortcuts.Undo.Text} undoes them all.", 4);
         Search(keepPosition: false);
     }
 

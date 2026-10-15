@@ -29,7 +29,7 @@ public sealed class OutlinePane : Border
         dock.Children.Add(header);
         _empty = new TextBlock
         {
-            Text = "Headings show up here.\n\nUse Heading 1–3 from the style menu (Ctrl+Alt+1–3), or type # and a space at the start of a line.",
+            Text = $"Headings show up here.\n\nUse Heading 1–3 from the style menu ({Shortcuts.Heading1.Text}, {Shortcuts.Heading2.Text}, {Shortcuts.Heading3.Text}), or type # and a space at the start of a line.",
             TextWrapping = TextWrapping.Wrap,
             Margin = new Thickness(8, 4, 12, 0),
             FontSize = 12.5,

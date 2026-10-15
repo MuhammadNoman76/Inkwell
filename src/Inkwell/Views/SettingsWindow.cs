@@ -42,7 +42,7 @@ public sealed class SettingsWindow : FluentWindow
             }, "App theme")));
         stack.Children.Add(Row("Icon.WeatherMoon", "Dark pages in dark mode",
             "Off: white pages on a dark background, as they will print. On: dark pages with light text, easier on the eyes at night (printing and PDF are never affected).",
-            Switch(s.DarkPaper, on => AppSettings.Update(x => x.DarkPaper = on), "Dark pages in dark mode")));
+            Switch(c => c.DarkPaper, on => AppSettings.Update(x => x.DarkPaper = on), "Dark pages in dark mode")));
 
         Header(stack, "Writing");
         var author = new TextBox { Width = 240, Text = s.AuthorName ?? "" };
@@ -54,41 +54,35 @@ public sealed class SettingsWindow : FluentWindow
             Core.Proofing.WindowsSpellChecker.IsSupportedOs
                 ? "Red squiggles under misspelt words, using Windows' own dictionaries for the languages you've added. Right-click a word for suggestions."
                 : "Spell checking needs Windows 8 or later; it isn't available on this version of Windows.",
-            Switch(s.SpellCheck, on => AppSettings.Update(x => x.SpellCheck = on), "Check spelling as I type")));
-        stack.Children.Add(Row("Icon.Code", "Markdown shortcuts", "Type # for a heading, - for a bullet, 1. for a numbered list, > for a quote, **bold**, _italic_ and `code`. Each one is undone with a single Ctrl+Z.",
-            Switch(s.MarkdownShortcuts, on => AppSettings.Update(x => x.MarkdownShortcuts = on), "Markdown shortcuts")));
+            Switch(c => c.SpellCheck, on => AppSettings.Update(x => x.SpellCheck = on), "Check spelling as I type")));
         stack.Children.Add(Row("Icon.SlashForward", "Slash commands", "Type / at the start of a line to insert a table, heading, picture, contents, footnote and more.",
-            Switch(s.SlashCommands, on => AppSettings.Update(x => x.SlashCommands = on), "Slash commands")));
+            Switch(c => c.SlashCommands, on => AppSettings.Update(x => x.SlashCommands = on), "Slash commands")));
         stack.Children.Add(Row("Icon.ClipboardPaste", "Paste matches my document",
-            "Pasted text takes your document's fonts and styles (bold, italic, links and lists are kept). A small chip after pasting lets you keep the source formatting instead. Ctrl+Shift+V always pastes plain text.",
-            Switch(s.PasteMatchesDestination, on => AppSettings.Update(x => x.PasteMatchesDestination = on), "Paste matches my document")));
+            $"Pasted text takes your document's fonts and styles (bold, italic, links and lists are kept). A small chip after pasting lets you keep the source formatting instead. {Shortcuts.PasteTextOnly.Text} always pastes plain text.",
+            Switch(c => c.PasteMatchesDestination, on => AppSettings.Update(x => x.PasteMatchesDestination = on), "Paste matches my document")));
 
         Header(stack, "Autocorrect");
         var note = new TextBlock
         {
-            Text = "Every automatic change shows a small chip and is undone by one Ctrl+Z straight after it. Capitals are never added after abbreviations such as i.e., e.g. or etc.",
+            Text = $"Every automatic change shows a small chip and is undone by one {Shortcuts.Undo.Text} straight after it. Capitals are never added after abbreviations such as i.e., e.g. or etc. A rule turned off from the chip can be turned back on here.",
             TextWrapping = TextWrapping.Wrap,
             Margin = new Thickness(2, 0, 0, 10),
         };
         note.SetResourceReference(StyleProperty, "Text.Caption");
         stack.Children.Add(note);
-        foreach (var rule in AutoCorrectRules.All.Where(r => r.Id is not (AutoCorrectRules.MarkdownBlocks or AutoCorrectRules.MarkdownInline)))
+        // Every rule, the Markdown ones too, so whatever "Stop doing this" turned off can be turned on again here.
+        foreach (var rule in AutoCorrectRulesShown)
         {
             var id = rule.Id;
-            var enabled = rule.EnabledByDefault ? !s.DisabledAutoCorrect.Contains(id) : s.DisabledAutoCorrect.Contains("+" + id);
-            stack.Children.Add(Row("Icon.Wand", rule.Name, rule.Description, Switch(enabled, on => AppSettings.Update(x =>
-            {
-                x.DisabledAutoCorrect.Remove(id);
-                x.DisabledAutoCorrect.Remove("+" + id);
-                if (rule.EnabledByDefault && !on) x.DisabledAutoCorrect.Add(id);
-                if (!rule.EnabledByDefault && on) x.DisabledAutoCorrect.Add("+" + id);
-            }), rule.Name)));
+            var markdown = id is AutoCorrectRules.MarkdownBlocks or AutoCorrectRules.MarkdownInline;
+            stack.Children.Add(Row(markdown ? "Icon.Code" : "Icon.Wand", rule.Name, rule.Description,
+                Switch(c => AutoCorrectRules.IsOn(c.DisabledAutoCorrect, id), on => AppSettings.Update(x => AutoCorrectRules.SetOn(x.DisabledAutoCorrect, id, on)), rule.Name)));
         }
 
         Header(stack, "Saving");
         stack.Children.Add(Row("Icon.Save", "Save automatically",
             "Saves a document that has a file a few seconds after you stop typing. New documents are never saved automatically until you choose where.",
-            Switch(s.AutoSaveFile, on => AppSettings.Update(x => x.AutoSaveFile = on), "Save automatically")));
+            Switch(c => c.AutoSaveFile, on => AppSettings.Update(x => x.AutoSaveFile = on), "Save automatically")));
         var recoveryValues = new[] { 0, 1, 2, 5, 10 };
         stack.Children.Add(Row("Icon.ArrowSync", "Keep a recovery copy", "If Inkwell closes unexpectedly, unsaved work can be recovered from the start screen.",
             Combo(new[] { "Off", "Every minute", "Every 2 minutes", "Every 5 minutes", "Every 10 minutes" }, Math.Max(0, Array.IndexOf(recoveryValues, s.RecoveryMinutes)), i =>
@@ -98,7 +92,7 @@ public sealed class SettingsWindow : FluentWindow
             }, "Recovery copy interval")));
         stack.Children.Add(Row("Icon.History", "Version history",
             "Keeps earlier versions of your saved documents on this PC (in your local app data), so you can look back and restore one. Nothing leaves your PC.",
-            Switch(s.VersionHistory, on => AppSettings.Update(x => x.VersionHistory = on), "Version history")));
+            Switch(c => c.VersionHistory, on => AppSettings.Update(x => x.VersionHistory = on), "Version history")));
         var capValues = new[] { 200, 500, 1000, 2000 };
         stack.Children.Add(Row("Icon.Delete", "Space for version history", "The oldest versions are removed when history reaches this size (the newest version of each document is always kept).",
             Combo(new[] { "200 MB", "500 MB", "1 GB", "2 GB" }, Math.Max(0, Array.IndexOf(capValues, s.HistoryTotalMegabytes)), i =>
@@ -108,7 +102,7 @@ public sealed class SettingsWindow : FluentWindow
             }, "Space for version history")));
         stack.Children.Add(Row("Icon.TextFont", "Embed Inkwell's fonts in documents",
             "Includes the fonts Inkwell bundles (Literata, Inter and the others, all under the SIL Open Font License) in saved .docx files, so they look the same on PCs that don't have them.",
-            Switch(s.EmbedFonts, on => AppSettings.Update(x => x.EmbedFonts = on), "Embed fonts")));
+            Switch(c => c.EmbedFonts, on => AppSettings.Update(x => x.EmbedFonts = on), "Embed fonts")));
 
         Header(stack, "New documents");
         var designs = DocumentDesigns.All.ToList();
@@ -129,7 +123,7 @@ public sealed class SettingsWindow : FluentWindow
         Header(stack, "Updates");
         stack.Children.Add(Row("Icon.ArrowSync", "Check for updates automatically",
             "Once a day Inkwell downloads a small file from nomanshafiq.com to see if there's a new version. Nothing about you or your documents is sent.",
-            Switch(s.CheckForUpdates, on => AppSettings.Update(x => x.CheckForUpdates = on), "Check for updates automatically")));
+            Switch(c => c.CheckForUpdates, on => AppSettings.Update(x => x.CheckForUpdates = on), "Check for updates automatically")));
         var check = new Button { Content = "Check now", VerticalAlignment = VerticalAlignment.Center };
         check.Click += async (_, _) =>
         {
@@ -173,10 +167,28 @@ public sealed class SettingsWindow : FluentWindow
         stack.Children.Add(about);
 
         Content = new ScrollViewer { Content = stack, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled, Focusable = false };
+        // Switches follow changes made elsewhere while this window is open ("Stop doing this", the palette).
+        AppSettings.Changed += OnSettingsChanged;
         Closed += (_, _) =>
         {
+            AppSettings.Changed -= OnSettingsChanged;
             if (s_open == this) s_open = null;
         };
+    }
+
+    /// <summary>The autocorrect rules Settings lists, each with its own switch: all of them.</summary>
+    public static IReadOnlyList<AutoCorrectRule> AutoCorrectRulesShown => AutoCorrectRules.All;
+
+    private readonly List<Action> _sync = new();
+
+    private void OnSettingsChanged()
+    {
+        if (!Dispatcher.CheckAccess())
+        {
+            Dispatcher.BeginInvoke(new Action(OnSettingsChanged));
+            return;
+        }
+        foreach (var sync in _sync) sync();
     }
 
     /// <summary>One settings window at a time.</summary>
@@ -247,12 +259,18 @@ public sealed class SettingsWindow : FluentWindow
         return combo;
     }
 
-    private static CheckBox Switch(bool value, Action<bool> changed, string name)
+    /// <summary>An on / off switch showing <paramref name="read"/> of the current settings (kept up to date).</summary>
+    private CheckBox Switch(Func<AppSettings, bool> read, Action<bool> changed, string name)
     {
-        var c = new CheckBox { IsChecked = value };
+        var c = new CheckBox { IsChecked = read(AppSettings.Current) };
         c.SetResourceReference(StyleProperty, "ToggleSwitch");
         c.Click += (_, _) => changed(c.IsChecked == true);
         AutomationProperties.SetName(c, name);
+        _sync.Add(() =>
+        {
+            var on = read(AppSettings.Current);
+            if (c.IsChecked != on) c.IsChecked = on;
+        });
         return c;
     }
 

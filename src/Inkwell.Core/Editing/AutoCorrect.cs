@@ -77,6 +77,26 @@ public static class AutoCorrectRules
     public static AutoCorrectRule? Find(string id) => All.FirstOrDefault(r => r.Id == id);
 
     public static string NameOf(string id) => Find(id)?.Name ?? id;
+
+    // The app's settings keep the rules that differ from their defaults as a list of strings: "id" turns off a rule
+    // that is on by default, "+id" turns on one that is off by default. Settings and "Stop doing this" both use these.
+
+    /// <summary>Whether a rule is on, given the stored list.</summary>
+    public static bool IsOn(IEnumerable<string> stored, string id)
+    {
+        var defaultOn = Find(id)?.EnabledByDefault ?? false;
+        return defaultOn ? !stored.Contains(id) : stored.Contains("+" + id);
+    }
+
+    /// <summary>Turns a rule on or off in the stored list.</summary>
+    public static void SetOn(IList<string> stored, string id, bool on)
+    {
+        while (stored.Remove(id)) { }
+        while (stored.Remove("+" + id)) { }
+        var defaultOn = Find(id)?.EnabledByDefault ?? false;
+        if (defaultOn && !on) stored.Add(id);
+        if (!defaultOn && on) stored.Add("+" + id);
+    }
 }
 
 /// <summary>Which rules are on (defaults from <see cref="AutoCorrectRule.EnabledByDefault"/>), plus the user's own abbreviations.</summary>
@@ -95,6 +115,19 @@ public sealed class AutoCorrectSettings
 
     /// <summary>The rules whose state differs from the default (for saving the settings).</summary>
     public IReadOnlyDictionary<string, bool> Overrides => _overrides;
+
+    /// <summary>The rules as the app's settings store them (see <see cref="AutoCorrectRules.SetOn"/>).</summary>
+    public static AutoCorrectSettings FromStored(IEnumerable<string> stored)
+    {
+        var settings = new AutoCorrectSettings();
+        foreach (var entry in stored)
+        {
+            if (string.IsNullOrEmpty(entry)) continue;
+            if (entry.StartsWith("+", StringComparison.Ordinal)) settings.SetEnabled(entry.Substring(1), true);
+            else settings.SetEnabled(entry, false);
+        }
+        return settings;
+    }
 
     /// <summary>Extra abbreviations after which a sentence isn't capitalised ("approx.", "Ch."), compared ignoring case.</summary>
     public HashSet<string> Abbreviations { get; } = new(StringComparer.OrdinalIgnoreCase);

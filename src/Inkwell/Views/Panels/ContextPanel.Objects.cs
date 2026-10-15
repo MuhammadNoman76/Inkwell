@@ -52,7 +52,7 @@ public sealed partial class ContextPanel
                 var text = anchor.PlainText().Trim();
                 position.Children.Add(Note("Anchored to: " + (text.Length == 0 ? "an empty paragraph" : "“" + (text.Length > 48 ? text.Substring(0, 45) + "…" : text) + "”")
                     + ". The picture stays on that paragraph's page, at the same place. Drag the anchor mark ⚓ to move it."));
-                position.Children.Add(Command("Go to the anchor paragraph", "Icon.Attach", () =>
+                position.Children.Add(Command("Go to the anchor paragraph", "Icon.Anchor", () =>
                 {
                     _editor.DocumentView.SelectDrawing(null);
                     _editor.GoTo(new DocPos(anchor, 0));
@@ -385,9 +385,9 @@ public sealed partial class ContextPanel
 
         var breaks = Section("Breaks");
         breaks.Children.Add(Commands(1,
-            Command("Page break", "Icon.DocumentPageBreak", () => Editor.InsertBreak(TextRun.PageBreak), "Ctrl+Enter"),
+            Command("Page break", "Icon.DocumentPageBreak", () => Editor.InsertBreak(TextRun.PageBreak), Shortcuts.PageBreak.Text),
             Command("Section break (new page)", "Icon.DocumentPageBreak", () => Editor.InsertSectionBreak("nextPage")),
             Command("Section break (same page)", "Icon.DocumentPageBreak", () => Editor.InsertSectionBreak("continuous"), "For changing the number of columns part-way down a page")));
-        breaks.Children.Add(Note("Show formatting marks (Ctrl+Shift+8) to see the breaks; click one and press Delete to remove it."));
+        breaks.Children.Add(Note($"Show formatting marks ({Shortcuts.FormattingMarks.Text}) to see the breaks; click one and press Delete to remove it."));
     }
 }

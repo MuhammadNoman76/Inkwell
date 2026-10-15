@@ -129,25 +129,20 @@
         <Setter Property="Padding" Value="1" />
     </Style>
 
-    <!-- The "Search or run a command" pill that opens the command palette. -->
+    <!-- The "Search commands" pill that opens the command palette. Its content (magnifier, label, shortcut badge)
+         is built by EditorView, which shortens it step by step in narrow windows. -->
     <Style x:Key="PaletteButton" TargetType="Button">
         <Setter Property="FocusVisualStyle" Value="{StaticResource FocusVisual}" />
         <Setter Property="Foreground" Value="{DynamicResource Text.Secondary}" />
         <Setter Property="Background" Value="{DynamicResource Control.Fill}" />
         <Setter Property="BorderBrush" Value="{DynamicResource Control.Stroke}" />
         <Setter Property="Height" Value="32" />
+        <Setter Property="Padding" Value="12,0,6,0" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Border x:Name="Bd" CornerRadius="16" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" Padding="12,0,6,0">
-                        <DockPanel>
-                            <c:IconView DockPanel.Dock="Left" Width="14" Height="14" Margin="0,0,8,0" Data="{DynamicResource Icon.Search}" />
-                            <Border DockPanel.Dock="Right" CornerRadius="10" Padding="7,1,7,2" Margin="10,0,0,0" VerticalAlignment="Center"
-                                    Background="{DynamicResource Subtle.FillSecondary}">
-                                <TextBlock Text="Ctrl+K" FontSize="11" Foreground="{DynamicResource Text.Tertiary}" />
-                            </Border>
-                            <ContentPresenter VerticalAlignment="Center" />
-                        </DockPanel>
+                    <Border x:Name="Bd" CornerRadius="16" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter VerticalAlignment="Center" />
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
@@ -160,28 +155,7 @@
         </Setter>
     </Style>
 
-    <!-- Slide rail rows: number on the left, thumbnail with a selection frame. -->
-    <Style x:Key="RailItem" TargetType="ListBoxItem">
-        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
-        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-        <Setter Property="Padding" Value="0" />
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="ListBoxItem">
-                    <Border x:Name="Row" Background="Transparent" Padding="6,5,10,5" CornerRadius="6">
-                        <ContentPresenter />
-                    </Border>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Row" Property="Background" Value="{DynamicResource Subtle.FillTertiary}" />
-                        </Trigger>
-                    </ControlTemplate.Triggers>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
-
-    <!-- A card that is a button (theme gallery, recent decks, layout picker). -->
+    <!-- A card that is a button (templates, recent documents, recovered work). -->
     <Style x:Key="CardButton" TargetType="Button">
         <Setter Property="FocusVisualStyle" Value="{StaticResource FocusVisual}" />
         <Setter Property="BorderThickness" Value="0" />
@@ -326,43 +300,6 @@
         </Setter>
     </Style>
 
-    <!-- The deck title in the command bar: plain text until hovered or focused. -->
-    <Style x:Key="TitleBox" TargetType="TextBox">
-        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
-        <Setter Property="Foreground" Value="{DynamicResource Text.Primary}" />
-        <Setter Property="CaretBrush" Value="{DynamicResource Text.Primary}" />
-        <Setter Property="SelectionBrush" Value="{DynamicResource Accent.Fill}" />
-        <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="FontSize" Value="14" />
-        <Setter Property="Padding" Value="6,2,6,3" />
-        <Setter Property="MinHeight" Value="0" />
-        <Setter Property="Height" Value="27" />
-        <Setter Property="MaxWidth" Value="260" />
-        <Setter Property="VerticalContentAlignment" Value="Center" />
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="TextBox">
-                    <Grid>
-                        <Border x:Name="Bd" CornerRadius="{StaticResource ControlCorner}" Background="Transparent" BorderThickness="1" BorderBrush="Transparent" />
-                        <Border x:Name="Line" CornerRadius="{StaticResource ControlCorner}" BorderBrush="{DynamicResource Accent.Fill}" BorderThickness="0,0,0,2" Opacity="0" />
-                        <ScrollViewer x:Name="PART_ContentHost" Focusable="False" VerticalAlignment="Center"
-                                      HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden" />
-                    </Grid>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Subtle.FillSecondary}" />
-                        </Trigger>
-                        <Trigger Property="IsKeyboardFocusWithin" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Control.FillInputActive}" />
-                            <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Control.Stroke}" />
-                            <Setter TargetName="Line" Property="Opacity" Value="1" />
-                        </Trigger>
-                    </ControlTemplate.Triggers>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
-
     <!-- Big choice cards (export formats). -->
     <ControlTemplate x:Key="ExportCardTemplate" TargetType="ToggleButton">
         <Border x:Name="Bd" CornerRadius="8" BorderThickness="1" Background="{DynamicResource Card.Background}" BorderBrush="{DynamicResource Card.Stroke}">
@@ -393,10 +330,6 @@
             </Setter.Value>
         </Setter>
     </Style>
-
-    <!-- Outline pictograms for picture and video shapes (the icon set has no sharp rectangle). -->
-    <Geometry x:Key="Icon.ShapeRectangle">F0 M 2.5 5 H 17.5 V 15 H 2.5 Z M 3.5 6 V 14 H 16.5 V 6 Z</Geometry>
-    <Geometry x:Key="Icon.ShapeRounded">F0 M 5.5 5 H 14.5 A 3 3 0 0 1 17.5 8 V 12 A 3 3 0 0 1 14.5 15 H 5.5 A 3 3 0 0 1 2.5 12 V 8 A 3 3 0 0 1 5.5 5 Z M 5.5 6 A 2 2 0 0 0 3.5 8 V 12 A 2 2 0 0 0 5.5 14 H 14.5 A 2 2 0 0 0 16.5 12 V 8 A 2 2 0 0 0 14.5 6 Z</Geometry>
 
     <!-- A page choice in a dialog's side list (link kinds): like the navigation of Windows 11 settings. -->
     <Style x:Key="NavItem" TargetType="RadioButton">

@@ -6,7 +6,7 @@
 # Output: dist\Inkwell-Setup-<version>-<edition>.exe and dist\SHA256SUMS.txt.
 # When every edition is built, the installers and SHA256SUMS.txt are also copied to release\.
 param(
-    [string]$Version = "1.0.0",
+    [string]$Version = "1.0.1",
     [ValidateSet("x64", "arm64", "x86", "legacy")]
     [string[]]$Editions = @("x64", "arm64", "x86", "legacy"),
     [switch]$SkipInstaller,

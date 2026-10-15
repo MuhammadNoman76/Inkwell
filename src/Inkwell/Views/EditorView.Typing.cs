@@ -24,21 +24,9 @@ public partial class EditorView
         get
         {
             var settings = AppSettings.Current;
-            var key = string.Join(",", settings.DisabledAutoCorrect) + "|" + settings.MarkdownShortcuts;
+            var key = string.Join(",", settings.DisabledAutoCorrect);
             if (_autoCorrect != null && _autoCorrectKey == key) return _autoCorrect;
-            var s = new AutoCorrectSettings();
-            foreach (var entry in settings.DisabledAutoCorrect)
-            {
-                // "+id" turns on a rule that is off by default; "id" turns one off.
-                if (entry.StartsWith("+", StringComparison.Ordinal)) s.SetEnabled(entry.Substring(1), true);
-                else s.SetEnabled(entry, false);
-            }
-            if (!settings.MarkdownShortcuts)
-            {
-                s.SetEnabled(AutoCorrectRules.MarkdownBlocks, false);
-                s.SetEnabled(AutoCorrectRules.MarkdownInline, false);
-            }
-            _autoCorrect = new AutoCorrect(s);
+            _autoCorrect = new AutoCorrect(AutoCorrectSettings.FromStored(settings.DisabledAutoCorrect));
             _autoCorrectKey = key;
             return _autoCorrect;
         }
@@ -142,8 +130,17 @@ public partial class EditorView
             ShowAutoCorrectChip(null, block.Description, block.RuleId);
             return true;
         }
-        if (result.Edits.Count > 0) ApplyAutoCorrect(result.Edits, showChip: false);
-        return false;
+        if (result.Edits.Count == 0) return false;
+        // The new paragraph first, then the correction on top as its own automatic step: as after a space, one
+        // Ctrl+Z puts back what was typed (the new paragraph stays) and the chip offers Undo and Stop doing this.
+        var entered = false;
+        Run(() =>
+        {
+            Editor.Enter();
+            entered = true;
+        });
+        if (entered) ApplyAutoCorrect(p, result.Edits);
+        return true;
     }
 
     /// <summary>After typed text went in: slash menu, Markdown shortcuts and autocorrect (each its own undo step).</summary>
@@ -182,15 +179,15 @@ public partial class EditorView
             ShowAutoCorrectChip(null, inline.Description, inline.RuleId);
             return;
         }
-        ApplyAutoCorrect(result.Edits, showChip: true);
+        ApplyAutoCorrect(p, result.Edits);
     }
 
-    private void ApplyAutoCorrect(IReadOnlyList<AutoCorrectEdit> edits, bool showChip)
+    /// <summary>Applies the corrections in <paramref name="p"/> (one automatic step) and shows the chip next to them.</summary>
+    private void ApplyAutoCorrect(Paragraph p, IReadOnlyList<AutoCorrectEdit> edits)
     {
-        var p = Editor.Selection.Active.Para;
         var applied = false;
-        Run(() => applied = Editor.ApplyAutoCorrect(edits));
-        if (!applied || !showChip) return;
+        Run(() => applied = Editor.ApplyAutoCorrect(p, edits));
+        if (!applied) return;
         // Where each change ended up (earlier edits shift later ones).
         var changes = new List<AppliedCorrection>();
         var delta = 0;
@@ -275,7 +272,7 @@ public partial class EditorView
         var label = new TextBlock { Text = description, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(10, 0, 6, 0), FontSize = 12.5, MaxWidth = 300, TextTrimming = TextTrimming.CharacterEllipsis };
         label.SetResourceReference(TextBlock.ForegroundProperty, "Text.Secondary");
         stack.Children.Add(label);
-        stack.Children.Add(ChipButton("Undo", "Put back what was typed (Ctrl+Z)", UndoAutoCorrect));
+        stack.Children.Add(ChipButton("Undo", Shortcuts.Tip("Put back what was typed", Shortcuts.Undo), UndoAutoCorrect));
         stack.Children.Add(ChipButton("Stop doing this", "Turn this off (Settings › Autocorrect turns it back on)", StopAutoCorrectRule));
         _autoCorrectChip = chip;
         ChipLayer.Children.Add(chip);
@@ -341,11 +338,8 @@ public partial class EditorView
         UndoAutoCorrect();
         if (rule == null) return;
         var name = AutoCorrectRules.NameOf(rule);
-        AppSettings.Update(s =>
-        {
-            s.DisabledAutoCorrect.Remove("+" + rule);
-            if (AutoCorrectRules.Find(rule)?.EnabledByDefault != false && !s.DisabledAutoCorrect.Contains(rule)) s.DisabledAutoCorrect.Add(rule);
-        });
+        AppSettings.Update(s => AutoCorrectRules.SetOn(s.DisabledAutoCorrect, rule, false));
+        // Settings lists every rule, this one included, with its switch.
         _window.ShowMessage($"“{name}” is off. Turn it back on in Settings › Autocorrect.", 5);
         FocusDocument();
     }

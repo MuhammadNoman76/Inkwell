@@ -10,7 +10,7 @@
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top">
                     <Button Style="{StaticResource IconButton}" c:Ui.Icon="{StaticResource Icon.Info}" ToolTip="About Inkwell"
                             AutomationProperties.Name="About Inkwell" Click="OnAbout" />
-                    <Button Margin="4,0,0,0" Style="{StaticResource IconButton}" c:Ui.Icon="{StaticResource Icon.Settings}" ToolTip="Settings (Ctrl+,)"
+                    <Button x:Name="SettingsButton" Margin="4,0,0,0" Style="{StaticResource IconButton}" c:Ui.Icon="{StaticResource Icon.Settings}"
                             AutomationProperties.Name="Settings" Click="OnSettings" />
                 </StackPanel>
                 <Image DockPanel.Dock="Left" Width="52" Height="52" Margin="0,0,16,0" Source="{StaticResource Logo.Mark}" />
@@ -26,8 +26,7 @@
             <!-- new -->
             <DockPanel Margin="0,0,0,12">
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                    <Button Style="{StaticResource IconTextButton}" c:Ui.Icon="{StaticResource Icon.FolderOpen}" Content="Open…" Click="OnOpen"
-                            ToolTip="Open a Word document, Markdown, text, RTF or OpenDocument file (Ctrl+O)" />
+                    <Button x:Name="OpenButton" Style="{StaticResource IconTextButton}" c:Ui.Icon="{StaticResource Icon.FolderOpen}" Content="Open…" Click="OnOpen" />
                 </StackPanel>
                 <TextBlock Style="{StaticResource Text.Subtitle}" Text="Start writing" VerticalAlignment="Center" />
             </DockPanel>

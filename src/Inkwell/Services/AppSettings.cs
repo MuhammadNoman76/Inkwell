@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Inkwell.Core.Editing;
 
 namespace Inkwell.Services;
 
@@ -58,10 +59,16 @@ public sealed class AppSettings
     /// <summary>Your name on comments and tracked changes.</summary>
     public string? AuthorName { get; set; }
     public bool SpellCheck { get; set; } = true;
+
+    /// <summary>
+    /// Inkwell 1.0.0's one switch for both Markdown rules. Off in an old settings file turns the two rules off
+    /// (<see cref="Normalize"/>); since 1.0.1 each rule has its own switch in Settings › Autocorrect.
+    /// </summary>
     public bool MarkdownShortcuts { get; set; } = true;
+
     public bool SlashCommands { get; set; } = true;
 
-    /// <summary>Autocorrect rules that are turned off (rule ids).</summary>
+    /// <summary>Autocorrect rules that differ from their defaults: "id" is off, "+id" is on (see AutoCorrectRules.SetOn).</summary>
     public List<string> DisabledAutoCorrect { get; set; } = new();
 
     /// <summary>Paste matches the destination's formatting (Keep source formatting stays one click away).</summary>
@@ -177,13 +184,19 @@ public sealed class AppSettings
 
     public static void RemoveRecent(string path) => Update(s => s.Recent.RemoveAll(r => string.Equals(r.Path, path, StringComparison.OrdinalIgnoreCase)));
 
+    /// <summary>Settings from the JSON of settings.json, tidied up (old settings brought up to date). Throws on invalid JSON.</summary>
+    public static AppSettings Parse(string json)
+    {
+        var settings = JsonSerializer.Deserialize<AppSettings>(json, JsonOptions) ?? new AppSettings();
+        settings.Normalize();
+        return settings;
+    }
+
     private static AppSettings? ReadFile()
     {
         try
         {
-            return File.Exists(FilePath)
-                ? JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(FilePath, Encoding.UTF8), JsonOptions)
-                : null;
+            return File.Exists(FilePath) ? Parse(File.ReadAllText(FilePath, Encoding.UTF8)) : null;
         }
         catch (Exception ex)
         {
@@ -217,6 +230,14 @@ public sealed class AppSettings
         var unpinned = Recent.Where(r => !r.Pinned).OrderByDescending(r => r.LastOpened).Skip(MaxRecent).ToList();
         foreach (var old in unpinned) Recent.Remove(old);
         DisabledAutoCorrect ??= new List<string>();
+        DisabledAutoCorrect = DisabledAutoCorrect.Where(e => !string.IsNullOrWhiteSpace(e)).Distinct(StringComparer.Ordinal).ToList();
+        if (!MarkdownShortcuts)
+        {
+            // 1.0.0 turned both Markdown rules off with one switch; they are rules with their own switches now.
+            AutoCorrectRules.SetOn(DisabledAutoCorrect, AutoCorrectRules.MarkdownBlocks, false);
+            AutoCorrectRules.SetOn(DisabledAutoCorrect, AutoCorrectRules.MarkdownInline, false);
+            MarkdownShortcuts = true;
+        }
         if (RecoveryMinutes < 0 || RecoveryMinutes > 60) RecoveryMinutes = 2;
         if (double.IsNaN(Zoom) || Zoom < 0.25 || Zoom > 5) Zoom = 1.0;
         if (HistoryPerDocument < 5 || HistoryPerDocument > 500) HistoryPerDocument = 50;

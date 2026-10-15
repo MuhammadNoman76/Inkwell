@@ -194,8 +194,17 @@
                     <StackPanel Orientation="Horizontal">
                         <c:IconView Width="16" Height="16"
                                     Data="{Binding (c:Ui.Icon), RelativeSource={RelativeSource AncestorType=Button}}" />
-                        <TextBlock Margin="8,0,0,1" VerticalAlignment="Center" Text="{Binding}" />
+                        <TextBlock x:Name="Label" Margin="8,0,0,1" VerticalAlignment="Center" Text="{Binding}" />
                     </StackPanel>
+                    <DataTemplate.Triggers>
+                        <!-- No label: just the icon (narrow windows). -->
+                        <DataTrigger Binding="{Binding}" Value="">
+                            <Setter TargetName="Label" Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding}" Value="{x:Null}">
+                            <Setter TargetName="Label" Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </DataTemplate.Triggers>
                 </DataTemplate>
             </Setter.Value>
         </Setter>
@@ -210,8 +219,17 @@
                     <StackPanel Orientation="Horizontal">
                         <c:IconView Width="16" Height="16"
                                     Data="{Binding (c:Ui.Icon), RelativeSource={RelativeSource AncestorType=Button}}" />
-                        <TextBlock Margin="8,0,0,1" VerticalAlignment="Center" Text="{Binding}" />
+                        <TextBlock x:Name="Label" Margin="8,0,0,1" VerticalAlignment="Center" Text="{Binding}" />
                     </StackPanel>
+                    <DataTemplate.Triggers>
+                        <!-- No label: just the icon (narrow windows). -->
+                        <DataTrigger Binding="{Binding}" Value="">
+                            <Setter TargetName="Label" Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding}" Value="{x:Null}">
+                            <Setter TargetName="Label" Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </DataTemplate.Triggers>
                 </DataTemplate>
             </Setter.Value>
         </Setter>

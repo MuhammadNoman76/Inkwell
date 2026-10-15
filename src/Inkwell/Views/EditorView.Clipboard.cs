@@ -262,7 +262,7 @@ public partial class EditorView
         stack.Children.Add(label);
         if (mode != PasteMode.KeepSource) stack.Children.Add(ChipButton("Keep source formatting", "Paste again with the original fonts, sizes and colours", () => RepasteAs(PasteMode.KeepSource)));
         else stack.Children.Add(ChipButton("Match this document", "Paste again in this document's styles", () => RepasteAs(PasteMode.Default)));
-        stack.Children.Add(ChipButton("Text only", "Paste again as plain text (Ctrl+Shift+V)", () => RepasteAs(PasteMode.TextOnly)));
+        stack.Children.Add(ChipButton("Text only", Shortcuts.Tip("Paste again as plain text", Shortcuts.PasteTextOnly), () => RepasteAs(PasteMode.TextOnly)));
         _pasteChip = chip;
         ChipLayer.Children.Add(chip);
         PositionChips();
@@ -288,7 +288,7 @@ public partial class EditorView
         // Only straight after the paste (the paste is still the last step).
         if (entry == null || !ReferenceEquals(Editor.History.Top, entry))
         {
-            _window.ShowMessage("The document changed since the paste. Undo to the paste first, or paste again with Ctrl+Shift+V.", 5);
+            _window.ShowMessage($"The document changed since the paste. Undo to the paste first, or paste again with {Shortcuts.PasteTextOnly.Text}.", 5);
             return;
         }
         _suppressChipHide = true;

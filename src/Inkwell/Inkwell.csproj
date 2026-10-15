@@ -18,7 +18,7 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <StartupObject>Inkwell.Program</StartupObject>
 
-    <Version>1.0.0</Version>
+    <Version>1.0.1</Version>
     <Product>Inkwell</Product>
     <Company>Inkwell</Company>
     <Description>Inkwell - write beautifully, without fighting your document</Description>

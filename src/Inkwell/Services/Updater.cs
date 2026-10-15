@@ -56,8 +56,14 @@ public static class Updater
     public const string DefaultFeedUrl = "https://www.nomanshafiq.com/updates/inkwell.json";
     public const string FeedOverrideVariable = "INKWELL_UPDATE_URL";
 
-    /// <summary>The installer's AppId (installer\Inkwell.iss) - Inno Setup keys the uninstall entry with it.</summary>
-    private const string UninstallKey = @"Software\Microsoft\Windows\CurrentVersion\Uninstall\{B522CE93-BE8D-4A68-A206-8B1ED3ED7489}_is1";
+    /// <summary>
+    /// The installer's AppId (AppId in installer\Inkwell.iss, the same for every edition). Inno Setup names the
+    /// uninstall entry after it, which tells how and where this copy was installed. A test compares the two.
+    /// </summary>
+    public const string InstallerAppId = "{B1102FC4-9C59-4C92-B3B7-4D1F6648BA1B}";
+
+    /// <summary>The uninstall entry Inno Setup writes: under HKCU for "only for me", HKLM for everyone.</summary>
+    public const string UninstallKey = @"Software\Microsoft\Windows\CurrentVersion\Uninstall\" + InstallerAppId + "_is1";
 
     private const int MaxFeedBytes = 256 * 1024;
     private static readonly TimeSpan FeedTimeout = TimeSpan.FromSeconds(15);
@@ -379,14 +385,28 @@ public static class Updater
     public static string AppDirectory => AppDomain.CurrentDomain.BaseDirectory.TrimEnd('\\', '/');
 
     /// <summary>Whether this copy was installed by the installer, for all users or just this user.</summary>
-    public static InstallScope DetectInstallScope()
+    public static InstallScope DetectInstallScope() =>
+        DetectInstallScope(
+            AppDirectory,
+            ReadInstallLocation,
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs"),
+            new[] { Environment.GetEnvironmentVariable("ProgramW6432"), Environment.GetEnvironmentVariable("ProgramFiles"), Environment.GetEnvironmentVariable("ProgramFiles(x86)") });
+
+    /// <summary>
+    /// The decision, with the registry and the standard folders passed in (the tests use made-up ones).
+    /// The uninstall entry decides, wherever the folder is: "only for me" installs write it under HKCU, installs
+    /// for everyone under HKLM (the 32-bit view for the x86 edition on 64-bit Windows). It must name this folder:
+    /// another installed copy doesn't make this one installed. Without a readable entry, the folder decides.
+    /// </summary>
+    /// <param name="installLocation">The InstallLocation of the uninstall entry in that hive and view, or null.</param>
+    public static InstallScope DetectInstallScope(string appDirectory, Func<RegistryHive, RegistryView, string?> installLocation, string userPrograms, IEnumerable<string?> programFiles)
     {
-        var dir = AppDirectory;
+        bool InstalledAt(RegistryHive hive, RegistryView view) =>
+            installLocation(hive, view) is { } location && !string.IsNullOrWhiteSpace(location) && SamePath(location, appDirectory);
         try
         {
-            if (InstalledAt(RegistryHive.CurrentUser, RegistryView.Default, dir)) return InstallScope.CurrentUser;
-            if (InstalledAt(RegistryHive.LocalMachine, RegistryView.Registry64, dir) ||
-                InstalledAt(RegistryHive.LocalMachine, RegistryView.Registry32, dir))
+            if (InstalledAt(RegistryHive.CurrentUser, RegistryView.Default)) return InstallScope.CurrentUser;
+            if (InstalledAt(RegistryHive.LocalMachine, RegistryView.Registry64) || InstalledAt(RegistryHive.LocalMachine, RegistryView.Registry32))
                 return InstallScope.AllUsers;
         }
         catch (Exception ex)
@@ -394,20 +414,18 @@ public static class Updater
             Log.Error(ex, "Detect install scope");
         }
 
-        // No (readable) uninstall entry: go by the folder.
-        var userPrograms = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs");
-        if (IsUnder(dir, userPrograms)) return InstallScope.CurrentUser;
-        foreach (var pf in new[] { Environment.GetEnvironmentVariable("ProgramW6432"), Environment.GetEnvironmentVariable("ProgramFiles"), Environment.GetEnvironmentVariable("ProgramFiles(x86)") })
-            if (!string.IsNullOrEmpty(pf) && IsUnder(dir, pf!)) return InstallScope.AllUsers;
+        // No (readable) uninstall entry for this folder: go by the folder.
+        if (IsUnder(appDirectory, userPrograms)) return InstallScope.CurrentUser;
+        foreach (var pf in programFiles)
+            if (!string.IsNullOrEmpty(pf) && IsUnder(appDirectory, pf!)) return InstallScope.AllUsers;
         return InstallScope.NotInstalled;
     }
 
-    private static bool InstalledAt(RegistryHive hive, RegistryView view, string dir)
+    private static string? ReadInstallLocation(RegistryHive hive, RegistryView view)
     {
         using var root = RegistryKey.OpenBaseKey(hive, view);
         using var key = root.OpenSubKey(UninstallKey);
-        var location = key?.GetValue("InstallLocation") as string;
-        return !string.IsNullOrWhiteSpace(location) && SamePath(location!, dir);
+        return key?.GetValue("InstallLocation") as string;
     }
 
     private static bool SamePath(string a, string b)

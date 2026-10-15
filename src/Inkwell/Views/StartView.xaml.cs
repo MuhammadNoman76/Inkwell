@@ -24,6 +24,8 @@ public partial class StartView
     {
         _window = window;
         InitializeComponent();
+        SettingsButton.ToolTip = Shortcuts.Tip("Settings", Shortcuts.Settings);
+        OpenButton.ToolTip = Shortcuts.Tip("Open a Word document, Markdown, text, RTF or OpenDocument file", Shortcuts.Open);
         BuildTemplates();
         BuildTour();
         PreviewKeyDown += OnKey;
@@ -45,18 +47,19 @@ public partial class StartView
 
     private void OnKey(object sender, KeyEventArgs e)
     {
-        if ((Keyboard.Modifiers & ModifierKeys.Control) == 0) return;
-        if (e.Key == Key.O)
+        var key = e.Key == Key.System ? e.SystemKey : e.Key;
+        var mods = Keyboard.Modifiers;
+        if (Shortcuts.Open.Matches(key, mods))
         {
             OnOpen(this, new RoutedEventArgs());
             e.Handled = true;
         }
-        else if (e.Key == Key.N)
+        else if (Shortcuts.NewDocument.Matches(key, mods))
         {
             NewFromTemplate(TemplateCatalog.All[0]);
             e.Handled = true;
         }
-        else if (e.Key == Key.OemComma)
+        else if (Shortcuts.Settings.Matches(key, mods))
         {
             OnSettings(this, new RoutedEventArgs());
             e.Handled = true;
@@ -338,12 +341,12 @@ public partial class StartView
     {
         ("Icon.Image", "Pictures stay where you put them", "Clear wrap choices with a live preview, alignment guides, a visible anchor and Lock position. Pictures you move keep their place on the page when the text above them changes."),
         ("Icon.TextNumberListLtr", "Lists number the way you expect", "A list continues only from the list right above it. \"Restart at 1\" and \"Continue from previous\" are right there in the panel, and indents stay consistent."),
-        ("Icon.ClipboardPaste", "Paste without the mess", "Pasted text takes your document's look and keeps bold, italic, links and lists. One click on the paste chip keeps the original formatting; Ctrl+Shift+V pastes plain text."),
+        ("Icon.ClipboardPaste", "Paste without the mess", "Pasted text takes your document's look and keeps bold, italic, links and lists. One click on the paste chip keeps the original formatting; " + Shortcuts.PasteTextOnly.Text + " pastes plain text."),
         ("Icon.TextEffects", "See why text looks the way it does", "Reveal formatting shows the style, the direct formatting and where each setting comes from. Clear formatting is one click, and a consistency check finds stray formatting."),
         ("Icon.DocumentPageBreak", "No mystery blank pages", "Page, section and column breaks are visible, labelled and selectable. The empty paragraph after a final table never makes an extra page, and neither does a page break at the very end."),
         ("Icon.Table", "Tables that cooperate", "Drag column borders, repeat header rows on every page, keep rows from splitting, add rows and columns with one click; Tab in the last cell adds a row."),
-        ("Icon.Wand", "Autocorrect you can trust", "Every automatic change shows a small chip and goes away with one Ctrl+Z. No capital letters after i.e., e.g. or etc., and every rule can be turned off."),
-        ("Icon.History", "Never lose work", "Documents with a file save themselves as you write, safely. Recovery copies cover new documents, and version history keeps earlier versions you can browse and restore."),
+        ("Icon.Wand", "Autocorrect you can trust", "Every automatic change shows a small chip and goes away with one " + Shortcuts.Undo.Text + ". No capital letters after i.e., e.g. or etc., and every rule can be turned off."),
+        ("Icon.History", "Never lose work", "Documents with a file save themselves, safely, a few seconds after you stop typing. Recovery copies cover new documents, and version history keeps earlier versions you can browse and restore."),
         ("Icon.DocumentLandscape", "One landscape page, one click", "\"Make this page landscape\" adds the section breaks around the page for you, and \"Make this page portrait\" undoes it the same way."),
         ("Icon.DocumentHeaderFooter", "Headers and footers without fiddling", "Click a header to edit it. First-page and odd/even options are obvious switches, and page numbers are one click."),
         ("Icon.TextEditStyle", "Styles that make sense", "A small, clear set of styles that follow the document's design, and \"Update style to match selection\" when you like what you made."),
