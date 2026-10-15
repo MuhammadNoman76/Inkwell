@@ -10,7 +10,7 @@ namespace Inkwell.Views.Editing;
 
 public sealed partial class DocumentView
 {
-    private enum DragMode { None, Select, SelectWords, SelectParagraphs, MoveDrawing, ResizeDrawing, ColumnBorder }
+    private enum DragMode { None, Select, SelectWords, SelectParagraphs, MoveDrawing, ResizeDrawing, ColumnBorder, MoveAnchor }
 
     private DragMode _drag;
     private DocPos _dragAnchorStart;
@@ -331,6 +331,18 @@ public sealed partial class DocumentView
         if (at == null) return;
         var (page, point) = at.Value;
 
+        // The anchor mark of the selected floating picture: drag it to another paragraph.
+        if (SelectedDrawing is { IsFloating: true } anchored && anchored.Float?.Locked != true && AnchorGlyphPoint(page, anchored) is { } glyph
+            && (new Point(glyph.X + 7 / _zoom, glyph.Y + 7 / _zoom) - point).Length <= 11 / _zoom)
+        {
+            _drag = DragMode.MoveAnchor;
+            _anchorTarget = null;
+            _dragPage = page;
+            CaptureMouse();
+            e.Handled = true;
+            return;
+        }
+
         // Handles of the selected picture.
         if (SelectedDrawing != null && DrawingBox(page, SelectedDrawing) is { } box && SelectedDrawing.Float?.Locked != true)
         {
@@ -508,6 +520,9 @@ public sealed partial class DocumentView
             case DragMode.MoveDrawing:
                 DragDrawing(view);
                 break;
+            case DragMode.MoveAnchor:
+                DragAnchor(view);
+                break;
             case DragMode.ResizeDrawing:
                 ResizeDrawing(view);
                 break;
@@ -647,6 +662,12 @@ public sealed partial class DocumentView
                 if (Math.Abs(rbox.Width - _dragStartBox.Width) > 0.5 || Math.Abs(rbox.Height - _dragStartBox.Height) > 0.5)
                     DrawingResized?.Invoke(SelectedDrawing, rbox.Size);
                 _resizeBox = null;
+                DrawOverlay();
+                break;
+            case DragMode.MoveAnchor when SelectedDrawing != null:
+                Guides.Clear();
+                if (_anchorTarget != null) AnchorMoved?.Invoke(SelectedDrawing, _anchorTarget);
+                _anchorTarget = null;
                 DrawOverlay();
                 break;
             case DragMode.ColumnBorder when _columnDrag is { } c:
@@ -821,5 +842,48 @@ public sealed partial class DocumentView
         var x = r.X + c.X + _columnDragDelta;
         dc.DrawLine(new Pen(new SolidColorBrush(AccentColor), 1.25 / _zoom) { DashStyle = DashStyles.Dash }, new Point(x, r.Y + c.Table.Y), new Point(x, r.Y + c.Table.Y + c.Table.Height));
         _caretVisual.Opacity = 1;
+    }
+}
+
+public sealed partial class DocumentView
+{
+    private Paragraph? _anchorTarget;
+
+    /// <summary>A floating picture's anchor mark was dragged onto another paragraph.</summary>
+    public event Action<DrawingObject, Paragraph>? AnchorMoved;
+
+    /// <summary>Where the anchor mark of a floating picture is drawn on a page (page coordinates), or null.</summary>
+    internal Point? AnchorGlyphPoint(PageLayout page, DrawingObject drawing)
+    {
+        var placement = page.Floats.FirstOrDefault(x => ReferenceEquals(x.Drawing, drawing));
+        if (placement == null || Layout == null) return null;
+        var caret = Layout.Caret(new DocPos(placement.Anchor, placement.AnchorOffset), false, page);
+        if (caret == null || caret.Value.Page != page) return null;
+        return new Point(Math.Max(4, page.Margins.Left - 22), caret.Value.Rect.Top + 2);
+    }
+
+    /// <summary>Shows where the anchor would go: a line at the start of the paragraph under the mouse.</summary>
+    private void DragAnchor(Point view)
+    {
+        var at = PageAt(view);
+        Guides.Clear();
+        _anchorTarget = null;
+        if (at != null && Layout != null)
+        {
+            var (page, point) = at.Value;
+            var hit = Layout.HitTest(page, new Point(Math.Max(point.X, page.Margins.Left + 2), point.Y));
+            var p = hit?.Position.Para;
+            if (p != null && p.Story is MainStory && !Nav.IsReadOnly(p) && Nav.CellOf(p) == null)
+            {
+                var caret = Layout.Caret(new DocPos(p, 0), false, page);
+                if (caret != null && caret.Value.Page == page)
+                {
+                    _anchorTarget = p;
+                    var y = caret.Value.Rect.Top;
+                    Guides.Add((page, new Point(page.Margins.Left - 24, y), new Point(page.Size.Width - page.Margins.Right, y)));
+                }
+            }
+        }
+        DrawOverlay();
     }
 }

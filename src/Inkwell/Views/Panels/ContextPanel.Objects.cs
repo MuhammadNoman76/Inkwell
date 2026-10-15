@@ -363,7 +363,7 @@ public sealed partial class ContextPanel
         columns.Children.Add(Segments(new[] { 1, 2, 3 }.Select(n => ((string?)n.ToString(CultureInfo.CurrentCulture), (string?)null, n + (n == 1 ? " column" : " columns"), section.ColumnCount == n,
             (Action)(() => Editor.SetColumns(n)))).ToArray()));
 
-        var hf = Section("Header and footer", "Double-click the top or bottom of a page to edit them.");
+        var hf = Section("Header and footer", "Click the top or bottom of a page to edit them.");
         hf.Children.Add(Commands(2,
             Command("Edit header", "Icon.DocumentHeader", () => _editor.EditHeaderFooterOfCurrentPage(true)),
             Command("Edit footer", "Icon.DocumentFooter", () => _editor.EditHeaderFooterOfCurrentPage(false))));

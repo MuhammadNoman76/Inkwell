@@ -29,6 +29,7 @@ public class DemoDocumentTests
 
         var bytes = Docx.Save(doc);
         Docx.AssertValid(bytes);
+        AssertFieldsNotSplit(bytes);
         var back = Docx.Load(bytes);
         Assert.Equal(Docx.Text(doc), Docx.Text(back));
 
@@ -40,6 +41,27 @@ public class DemoDocumentTests
             PdfExporter.Export(doc, Path.Combine(folder!, id + ".pdf"), new PdfExportOptions { FileName = id + ".docx" });
         }
     });
+
+    /// <summary>
+    /// Word refuses a document where a field's characters are spread over several hyperlinks (begin in one,
+    /// end in another), which the schema allows: every hyperlink and tracked change must hold whole fields.
+    /// </summary>
+    private static void AssertFieldsNotSplit(byte[] bytes)
+    {
+        var body = Docx.PartXml(bytes, "word/document.xml");
+        foreach (var wrapper in body.Descendants().Where(e => e.Name == Docx.W + "hyperlink" || e.Name == Docx.W + "ins" && e.Parent?.Name == Docx.W + "p"))
+        {
+            var depth = 0;
+            foreach (var c in wrapper.Descendants(Docx.W + "fldChar"))
+            {
+                var type = (string?)c.Attribute(Docx.W + "fldCharType");
+                if (type == "begin") depth++;
+                else if (type == "end") depth--;
+                Assert.True(depth >= 0, "a field ends in a hyperlink it didn't start in");
+            }
+            Assert.True(depth == 0, "a field starts in a hyperlink and ends outside it");
+        }
+    }
 
     [Fact]
     public void Report_HasTocFootnotesTablePicturesAndCaptions() => Sta.Run(() =>

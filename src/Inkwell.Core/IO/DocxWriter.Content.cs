@@ -572,7 +572,16 @@ internal sealed partial class DocxWriteSession
         if (f.Result.Count > 0)
         {
             items.Add(Keyed(new Item(Run(f.Props, new XElement(Wn.FldChar, new XAttribute(Ns.W + "fldCharType", "separate")))), f));
+            // The result belongs to the field: it shares the field's hyperlink and tracked change, so the field
+            // characters and the result end up inside one w:hyperlink / w:ins (Word refuses a field split across them).
+            var first = items.Count;
             foreach (var r in f.Result) AddInlineItems(items, r, pw);
+            for (var i = first; i < items.Count; i++)
+            {
+                items[i].Link ??= f.Link;
+                items[i].Ins ??= f.Inserted;
+                items[i].Del ??= f.Deleted;
+            }
         }
         items.Add(Keyed(new Item(Run(f.Props, new XElement(Wn.FldChar, new XAttribute(Ns.W + "fldCharType", "end")))), f));
         return items;

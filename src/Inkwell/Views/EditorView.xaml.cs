@@ -66,6 +66,7 @@ public partial class EditorView
         Doc.ContextMenuRequested += ShowContextMenu;
         Doc.HeaderFooterRequested += EditHeaderFooter;
         Doc.DrawingMoved += OnDrawingMoved;
+        Doc.AnchorMoved += (d, p) => Run(() => Editor.MoveAnchor(d, p));
         Doc.DrawingResized += (d, size) => Run(() => Editor.ResizeDrawing(d, size));
         Doc.ColumnResized += (t, edge, delta) => Run(() => Editor.ResizeColumn(t, edge, delta));
         Doc.DrawingSelectionChanged += () => ScheduleState();

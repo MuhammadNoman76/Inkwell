@@ -150,7 +150,38 @@ public sealed class DocumentStats
             foreach (var note in document.Footnotes.Values.Where(n => !n.IsSpecial)) acc.AddBlocks(note.Blocks);
             foreach (var note in document.Endnotes.Values.Where(n => !n.IsSpecial)) acc.AddBlocks(note.Blocks);
         }
+        AddListLabels(acc, document, options);
         return acc.Result(options);
+    }
+
+    /// <summary>
+    /// Word counts list numbers ("1.", "a)") as words, and bullets too unless they are plain bullet dots (•, ·, or
+    /// the Symbol font's private-use bullets); measured against Word: "◦" and "▪" count, "•" doesn't.
+    /// </summary>
+    private void AddListLabels(Accumulator acc, Document document, StatsOptions options)
+    {
+        var stories = new List<Story> { document.Body };
+        if (options.IncludeNotes)
+        {
+            stories.AddRange(document.Footnotes.Values.Where(n => !n.IsSpecial));
+            stories.AddRange(document.Endnotes.Values.Where(n => !n.IsSpecial));
+        }
+        Dictionary<Paragraph, string> labels;
+        try
+        {
+            labels = Layout.Numberer.Labels(document, new Styles.StyleResolver(document), stories);
+        }
+        catch (Exception)
+        {
+            return;
+        }
+        foreach (var (p, label) in labels)
+        {
+            if (p.Props.MarkProps()?.MarkDeleted != null) continue;
+            var text = label.Trim();
+            if (text.Length == 0 || text.All(c => c is '•' or '·' or '‣' or '⁃' || (c >= '' && c <= ''))) continue;
+            acc.AddLabel(CountText(text));
+        }
     }
 
     /// <summary>The statistics of some paragraphs (a story, a section).</summary>
@@ -255,6 +286,9 @@ public sealed class DocumentStats
                 if (inline is DrawingObject { TextBoxContent: { } content } && inline.Deleted == null)
                     AddBlocks(content);
         }
+
+        /// <summary>A list label: counts toward words and characters, not paragraphs.</summary>
+        public void AddLabel(TextCounts counts) => _total += counts;
 
         public DocumentStatistics Result(StatsOptions options) => new()
         {
