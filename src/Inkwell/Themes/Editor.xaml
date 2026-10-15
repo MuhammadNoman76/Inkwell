@@ -184,6 +184,8 @@
     <!-- A card that is a button (theme gallery, recent decks, layout picker). -->
     <Style x:Key="CardButton" TargetType="Button">
         <Setter Property="FocusVisualStyle" Value="{StaticResource FocusVisual}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="BorderBrush" Value="Transparent" />
         <Setter Property="Foreground" Value="{DynamicResource Text.Primary}" />
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="Cursor" Value="Hand" />

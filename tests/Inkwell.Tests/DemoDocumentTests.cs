@@ -37,7 +37,7 @@ public class DemoDocumentTests
         if (!string.IsNullOrEmpty(folder))
         {
             Directory.CreateDirectory(folder!);
-            DocumentFiles.SaveDocx(DemoDocuments.All.Single(d => d.Id == id).Create(), Path.Combine(folder!, id + ".docx"), embedFonts: false);
+            DocumentFiles.SaveDocx(DemoDocuments.All.Single(d => d.Id == id).Create(), Path.Combine(folder!, id + ".docx"), embedFonts: true);
             PdfExporter.Export(doc, Path.Combine(folder!, id + ".pdf"), new PdfExportOptions { FileName = id + ".docx" });
         }
     });
