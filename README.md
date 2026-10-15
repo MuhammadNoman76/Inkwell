@@ -32,7 +32,7 @@ Inkwell is a free word processor for Windows. It opens and saves Word documents 
 
 - **Word documents**: opens and saves .docx (and .docm / .dotx / .dotm) with styles, themes, lists, tables, pictures, headers and footers, sections, footnotes and endnotes, comments, tracked changes, fields and document properties. Parts Inkwell doesn't edit (macros, charts, SmartArt, equations, embedded objects, content controls, custom XML) are kept exactly as they were and shown as placeholders; when you open such a file Inkwell tells you what was kept. See the [compatibility table](#word-compatibility).
 - **Other formats**: opens Markdown, plain text, RTF, OpenDocument text (.odt / .fodt) and web pages (as new documents to save as .docx). Exports PDF (selectable and searchable text, bookmarks from headings, working links), Markdown, a web page and plain text. Prints through Windows.
-- **Designs**: six designs (fonts, colours and heading styles at once) and eight templates: blank, report, letter, résumé, essay, proposal, meeting notes and newsletter. Bundled fonts include Literata, Source Serif 4, Inter, Playfair Display, DM Sans, JetBrains Mono, and Noto Naskh Arabic and Noto Nastaliq Urdu for right-to-left text; they can be embedded in saved files so the document looks the same elsewhere.
+- **Designs**: six designs (fonts, colours and heading styles at once) and eight templates: blank, report, letter, résumé, essay, proposal, meeting notes and newsletter. Bundled fonts include Literata, Source Serif 4, Inter, Playfair Display, DM Sans, JetBrains Mono, and Noto Naskh Arabic and Noto Nastaliq Urdu for right-to-left text; Inkwell embeds the ones a document uses when it saves (about 0.5–1.5 MB per document; Settings can turn it off), so the document looks the same on a PC without them.
 - **Typography**: kerning and ligatures, widow and orphan control, keep with next, smart quotes, proper dashes.
 - **Writing**: focus mode (everything but the current paragraph fades, the line stays in the middle), typewriter scrolling, pageless view, word goals, dark mode with readable pages (or dark pages if you prefer).
 - **Command palette** (Ctrl+K) for every command, style, design, template and heading; **slash commands** (type `/` for a table, heading, picture, contents, footnote, page break, quote, code, divider, date…).
@@ -69,7 +69,7 @@ Inkwell is a free word processor for Windows. It opens and saves Word documents 
 | Macros (.docm), custom XML, glossary, digital signatures | Macros and custom XML are kept exactly; signatures are removed on save (they'd no longer match), as Word does |
 | Word 97–2003 .doc files | Not supported: open them in Word and save as .docx |
 
-**Checked against Microsoft Word:** WORD_RESULTS
+**Checked against Microsoft Word:** nine documents saved by Inkwell (the five [samples](samples/) and tests of sections, lists, tables and fields) were opened in Microsoft Word (Microsoft 365, version 16) through its automation interface. All nine open without errors or repairs, and Word's counts match Inkwell's in 116 of 117 checks: pages, words, tables, pictures in line and floating, footnotes, endnotes, comments, sections, links, tables of contents, citation sources and tracked changes. The one difference: the résumé is two pages in Inkwell and one in Word, because a line next to the floating portrait wraps one word earlier in Inkwell. Line breaks can differ slightly from Word's, most likely next to floating pictures. (`toolsword-fidelity.ps1` repeats the comparison.)
 
 ## Download
 

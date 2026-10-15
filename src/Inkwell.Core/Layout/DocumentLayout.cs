@@ -79,7 +79,10 @@ public sealed class DocumentLayout : IDisposable
 
     public void Dispose() => _lines.Dispose();
 
-    private int DocumentStamp() => Document.Version * 31 + Document.Styles.Version * 1009 + Document.Numbering.Version * 7919 + Document.Theme.Version * 104729 + View.LayoutStamp;
+    // Section settings (page size, margins, columns, headers) change every page of a section, not just the edited
+    // paragraph's: they are part of the stamp, so a change lays out everything again.
+    private int DocumentStamp() => unchecked(Document.Version * 31 + Document.Styles.Version * 1009 + Document.Numbering.Version * 7919 + Document.Theme.Version * 104729 + View.LayoutStamp
+        + string.Join("|", Document.Sections().Select(s => s.Props.LayoutKey())).GetHashCode() * 13);
 
     /// <summary>Forgets everything (after view option or style changes).</summary>
     public void Invalidate()
