@@ -125,7 +125,10 @@ public sealed class PageRenderer
             using var textLine = formatter.Recreate(source, line);
             var origin = new Point(f.X + line.X, line.Top + line.TextOffset);
             DrawFieldShading(dc, f, line, textLine, origin);
-            textLine.Draw(dc, origin, InvertAxes.None);
+            // A right-to-left TextLine measures in page coordinates (its Start is the gap on the left) but draws its
+            // content from the origin as if that gap were on the right: shift it to where it measures.
+            var drawAt = source.IsRtl ? new Point(origin.X + 2 * textLine.Start + textLine.Width - line.FormatWidth, origin.Y) : origin;
+            textLine.Draw(dc, drawAt, InvertAxes.None);
             extras?.LineDrawn?.Invoke(f, line, textLine, origin);
             if (extras?.FormattingMarks == true) DrawMarks(dc, f, line, textLine, origin, source);
         }

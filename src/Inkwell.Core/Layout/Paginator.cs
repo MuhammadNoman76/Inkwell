@@ -1088,9 +1088,9 @@ public sealed class Paginator
                 }
             }
         }
-        foreach (var l in current.Lines)
+        foreach (var l in current.Lines.Contains(currentLine) ? current.Lines : current.Lines.Append(currentLine))
         {
-            if (ReferenceEquals(l, currentLine)) continue;
+            // The anchor line itself counts too: a float beside its own paragraph narrows that first line.
             if (l.Top + l.Height > f.WrapBox.Top + 0.5 && l.Top < f.WrapBox.Bottom && Overlaps(current.X + l.X, l.FormatWidth, f.WrapBox)) return true;
         }
         return false;

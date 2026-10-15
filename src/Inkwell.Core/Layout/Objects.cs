@@ -32,10 +32,11 @@ public abstract class InkObject : TextEmbeddedObject
 
     public override TextEmbeddedObjectMetrics Format(double remainingParagraphWidth) => new(Width, Height, BaselineOffset);
 
-    public override Rect ComputeBoundingBox(bool rightToLeft, bool sideways) => new(0, 0, Width, Height);
+    // WPF passes the baseline point as the origin: the object extends BaselineOffset above it.
+    public override Rect ComputeBoundingBox(bool rightToLeft, bool sideways) => new(0, -BaselineOffset, Width, Height);
 
     public override void Draw(DrawingContext drawingContext, Point origin, bool rightToLeft, bool sideways) =>
-        DrawIn(drawingContext, new Rect(origin.X, origin.Y, Width, Height));
+        DrawIn(drawingContext, new Rect(origin.X, origin.Y - BaselineOffset, Width, Height));
 
     /// <summary>Draws the object filling <paramref name="box"/>.</summary>
     public abstract void DrawIn(DrawingContext dc, Rect box);
