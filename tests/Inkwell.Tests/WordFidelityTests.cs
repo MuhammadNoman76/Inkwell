@@ -12,9 +12,8 @@ namespace Inkwell.Tests;
 
 /// <summary>
 /// Material for the Microsoft Word comparison (tools\word-fidelity.ps1), which only runs when asked:
-/// INKWELL_FIDELITY_DIR=folder writes the test documents and Inkwell's own counts (inkwell.csv) there;
-/// after Word has opened them and saved copies (*.word.docx), the second test reads those copies back.
-/// Without the variable both tests do nothing.
+/// INKWELL_FIDELITY_DIR=folder writes the test documents (fonts embedded) and Inkwell's own counts (inkwell.csv)
+/// there; the script writes Word's counts (word.csv) next to them. Without the variable the test does nothing.
 /// </summary>
 public class WordFidelityTests
 {
@@ -167,29 +166,9 @@ public class WordFidelityTests
             // Fonts embedded, as Inkwell saves by default: Word lays the pages out with the same fonts.
             DocumentFiles.SaveDocx(doc, path, embedFonts: true);
             var counts = Counts(DocumentFiles.Open(path).Document);
-            foreach (var (key, value) in counts) csv.AppendLine($"{name},{key},{value}");
+            foreach (var kv in counts) csv.AppendLine($"{name},{kv.Key},{kv.Value}");
         }
         File.WriteAllText(Path.Combine(folder!, "inkwell.csv"), csv.ToString());
     });
 
-    [Fact]
-    public void ReadWordsCopiesBack() => Sta.Run(() =>
-    {
-        var folder = Folder;
-        if (string.IsNullOrEmpty(folder) || !Directory.Exists(folder!)) return;
-        var copies = Directory.GetFiles(folder!, "*.word.docx");
-        if (copies.Length == 0) return;
-        var csv = new StringBuilder();
-        foreach (var copy in copies)
-        {
-            var name = Path.GetFileName(copy).Replace(".word.docx", "");
-            var original = DocumentFiles.Open(Path.Combine(folder!, name + ".docx")).Document;
-            var fromWord = DocumentFiles.Open(copy).Document;
-            string Text(Document d) => string.Join("\n", d.Body.Paragraphs.Select(p => p.PlainText()));
-            var same = Text(original) == Text(fromWord);
-            csv.AppendLine($"{name},textSame,{(same ? 1 : 0)}");
-            foreach (var (key, value) in Counts(fromWord)) csv.AppendLine($"{name},{key},{value}");
-        }
-        File.WriteAllText(Path.Combine(folder!, "inkwell-from-word.csv"), csv.ToString());
-    });
 }
