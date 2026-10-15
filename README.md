@@ -75,7 +75,10 @@ Inkwell is a free word processor for Windows. It opens and saves Word documents 
 
 | Edition | For | Installer |
 |---|---|---|
-DOWNLOAD_ROWS
+| x64 | Windows 10 / 11, 64-bit Intel or AMD (most PCs) | [Inkwell-Setup-1.0.0-x64.exe](https://github.com/MuhammadNoman76/Inkwell/raw/refs/heads/main/release/Inkwell-Setup-1.0.0-x64.exe) (46.8 MB) |
+| ARM64 | Windows 10 / 11 on ARM (Snapdragon, Surface Pro X…) | [Inkwell-Setup-1.0.0-arm64.exe](https://github.com/MuhammadNoman76/Inkwell/raw/refs/heads/main/release/Inkwell-Setup-1.0.0-arm64.exe) (41.6 MB) |
+| x86 | 32-bit Windows 10 | [Inkwell-Setup-1.0.0-x86.exe](https://github.com/MuhammadNoman76/Inkwell/raw/refs/heads/main/release/Inkwell-Setup-1.0.0-x86.exe) (43.0 MB) |
+| Windows 7 / 8.1 | Windows 7 SP1 and 8.1, 32- or 64-bit (needs .NET Framework 4.8) | [Inkwell-Setup-1.0.0-win7-8.exe](https://github.com/MuhammadNoman76/Inkwell/raw/refs/heads/main/release/Inkwell-Setup-1.0.0-win7-8.exe) (6.7 MB) |
 
 Checksums: [SHA256SUMS.txt](https://github.com/MuhammadNoman76/Inkwell/blob/main/release/SHA256SUMS.txt). Download page: https://www.nomanshafiq.com/inkwell/
 
@@ -83,7 +86,7 @@ The installer can install for everyone (asks for administrator rights) or just f
 
 **Windows SmartScreen:** the installers aren't code-signed yet, so Windows may show "Windows protected your PC" the first time. Click **More info**, then **Run anyway**. You can check the download against `SHA256SUMS.txt` first.
 
-**Not tested yet:** ARM64 hardware (the ARM64 edition is built but hasn't run on a real ARM PC), real Windows 7 / 8.1 PCs and 32-bit Windows 10 (those editions were run on 64-bit Windows 11), printing on a real printer, and spell checking in languages other than English.
+**Not tested yet:** ARM64 hardware (the ARM64 edition is built but hasn't run on a real ARM PC), real Windows 7 / 8.1 PCs and 32-bit Windows 10 (those editions were run on 64-bit Windows 11), printing on a real printer, spell checking in languages other than English, screen readers (Narrator, NVDA) and East Asian input methods.
 
 ## Updates
 
