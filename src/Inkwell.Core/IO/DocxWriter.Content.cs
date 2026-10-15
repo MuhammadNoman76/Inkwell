@@ -183,6 +183,33 @@ internal sealed partial class DocxWriteSession
         SortIfNeeded(copy, SchemaOrder.ParaProps);
         var rPr = copy.Element(Wn.RPr);
         if (rPr != null) SortIfNeeded(rPr, SchemaOrder.RunProps);
+        var sectPr = copy.Element(Wn.SectPr);
+        if (sectPr != null) SortIfNeeded(sectPr, SectionOrder);
+        return copy;
+    }
+
+    /// <summary>
+    /// CT_SectPr's order. Header and footer references share the first place (they may come in any order);
+    /// SchemaOrder.SectProps lacks footerReference, so new elements could land before it.
+    /// </summary>
+    internal static readonly Dictionary<string, int> SectionOrder = MakeOrder(
+        new[] { "headerReference", "footerReference" }, new[] { "footnotePr" }, new[] { "endnotePr" }, new[] { "type" }, new[] { "pgSz" }, new[] { "pgMar" },
+        new[] { "paperSrc" }, new[] { "pgBorders" }, new[] { "lnNumType" }, new[] { "pgNumType" }, new[] { "cols" }, new[] { "formProt" }, new[] { "vAlign" },
+        new[] { "noEndnote" }, new[] { "titlePg" }, new[] { "textDirection" }, new[] { "bidi" }, new[] { "rtlGutter" }, new[] { "docGrid" },
+        new[] { "printerSettings" }, new[] { "*" }, new[] { "sectPrChange" });
+
+    private static Dictionary<string, int> MakeOrder(params string[][] ranks)
+    {
+        var d = new Dictionary<string, int>(StringComparer.Ordinal);
+        for (var i = 0; i < ranks.Length; i++)
+            foreach (var name in ranks[i]) d[name] = i * 10;
+        return d;
+    }
+
+    private static XElement SectionCopy(SectProps props)
+    {
+        var copy = new XElement(props.X);
+        SortIfNeeded(copy, SectionOrder);
         return copy;
     }
 

@@ -172,6 +172,26 @@ public class DocxStructureTests
     }
 
     [Fact]
+    public void SectionEditedAfterLoading_StaysInSchemaOrder()
+    {
+        var original = TestDocx.Create(TestDocx.P("x") +
+            "<w:sectPr><w:headerReference w:type=\"default\" r:id=\"rIdH\"/><w:footerReference w:type=\"default\" r:id=\"rIdF\"/><w:pgSz w:w=\"12240\" w:h=\"15840\"/></w:sectPr>",
+            (_, main) =>
+            {
+                TestDocx.Write(main.AddNewPart<DocumentFormat.OpenXml.Packaging.HeaderPart>("rIdH"), "<w:hdr " + TestDocx.Declarations + "><w:p/></w:hdr>");
+                TestDocx.Write(main.AddNewPart<DocumentFormat.OpenXml.Packaging.FooterPart>("rIdF"), "<w:ftr " + TestDocx.Declarations + "><w:p/></w:ftr>");
+            });
+        var doc = Docx.Load(original);
+        doc.Body.FinalSection.ColumnCount = 2;
+        doc.Body.FinalSection.TitlePage = true;
+        doc.Body.FinalSection.SetMargins(1000, 1000, 1000, 1000, 500, 500, 0);
+        var saved = Docx.Save(doc);
+        Docx.AssertValid(saved);
+        var names = Docx.Body(saved).Element(W + "sectPr")!.Elements().Select(e => e.Name.LocalName).ToList();
+        Assert.Equal(new[] { "headerReference", "footerReference", "pgSz", "pgMar", "cols", "titlePg" }, names);
+    }
+
+    [Fact]
     public void HeaderNoLongerReferenced_IsDeleted_AndMissingOnesAreDropped()
     {
         var doc = new Document();

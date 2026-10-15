@@ -458,7 +458,7 @@ internal sealed partial class DocxWriteSession
         var body = new XElement(Wn.Body);
         WriteBlocks(body, _doc.Body.Blocks, pw, false);
         if (!body.HasElements) body.Add(new XElement(Wn.P));
-        body.Add(new XElement(_doc.Body.FinalSection.X));
+        body.Add(SectionCopy(_doc.Body.FinalSection));
         root.Add(body);
         _trees.Add(new StoryTree(pw, NewXml(root), "document"));
 
