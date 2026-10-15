@@ -158,6 +158,39 @@ public class PaginationTests
     });
 
     [Fact]
+    public void EmptyParagraphAfterAFinalTable_NeverMakesABlankPage() => Sta.Run(() =>
+    {
+        // Tables of growing length: whatever space is left, the empty last paragraph stays on the table's last page.
+        for (var rows = 30; rows < 40; rows++)
+        {
+            var b = new DocBuilder(DocumentDesigns.Default);
+            var data = new List<string[]> { new[] { "A", "B" } };
+            for (var i = 0; i < rows; i++) data.Add(new[] { "Row " + i, "Value" });
+            var table = b.Table(data);
+            var last = b.P("");
+            using var layout = Lay(b.Doc);
+            var tablePages = layout.Pages.Where(pg => pg.Columns.SelectMany(c => c.Content).Any(f => f.Block == table)).ToList();
+            Assert.Same(tablePages.Last(), Where(layout, last).Single().Page);
+            Assert.Equal(tablePages.Count, layout.Pages.Count);
+        }
+    });
+
+    [Fact]
+    public void PageBreakBeforeTheParagraphMark_LeavesNoEmptyLineAndNoBlankPage() => Sta.Run(() =>
+    {
+        var b = new DocBuilder(DocumentDesigns.Default);
+        b.P("First page");
+        b.PageBreak();
+        var next = b.P("Second page starts here");
+        var end = b.P("The end");
+        end.Inlines.Add(new Inkwell.Core.Model.TextRun(""));
+        using var layout = Lay(b.Doc);
+        Assert.Equal(2, layout.Pages.Count);
+        var first = layout.Pages[1].Columns[0].Content.OfType<ParaFragment>().First();
+        Assert.Same(next, first.Paragraph);
+    });
+
+    [Fact]
     public void Pageless_IsOneTallPage() => Sta.Run(() =>
     {
         var b = new DocBuilder(DocumentDesigns.Default);

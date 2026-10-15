@@ -366,6 +366,32 @@ internal static partial class CaptureRunner
                 await CaptureWindow(new SettingsWindow { Owner = window, ShowActivated = false, WindowStartupLocation = WindowStartupLocation.Manual }, $"settings-{s}", 900);
             }
 
+            if (Wanted(only, "tour"))
+            {
+                window.ShowStartView();
+                await Settle(600);
+                window.Start?.Scroller.ScrollToEnd();
+                await Settle(500);
+                await Capture(window, $"start-tour-{s}");
+            }
+
+            if (Wanted(only, "spelling"))
+            {
+                Environment.SetEnvironmentVariable("INKWELL_TEST_SPELLING", "1");
+                var b = new DocBuilder(Core.Templates.DocumentDesigns.Default);
+                b.Heading(1, "Proofreading");
+                b.P("Thsi sentense has a cuple of mistakes that Windows' spell checker finds as you type.");
+                b.P("Right-click a marked word for suggestions, or press F7 to go to the next one.");
+                var view = Open(window, b.Doc);
+                await Settle(2500);
+                view.DocumentView.Redraw();
+                await Settle(300);
+                await Capture(window, $"spelling-{s}");
+                Environment.SetEnvironmentVariable("INKWELL_TEST_SPELLING", null);
+            }
+
+            if (mode == AppTheme.Light && Wanted(only, "smoke")) await Smoke(window);
+
             foreach (var w in Application.Current.Windows.OfType<MainWindow>().ToList())
             {
                 if (w.Editor is { } e) e.Session.MarkSaved(e.Editor.History.Version);
@@ -374,6 +400,60 @@ internal static partial class CaptureRunner
             }
             await Settle(300);
         }
+    }
+
+    /// <summary>End-to-end checks through the real window code: open, type, save, automatic save, import. Results in smoke.txt.</summary>
+    private static async Task Smoke(MainWindow window)
+    {
+        var results = new List<string>();
+        void Check(string name, bool ok, string detail = "") => results.Add((ok ? "PASS " : "FAIL ") + name + (detail.Length > 0 ? " — " + detail : ""));
+        try
+        {
+            var path = Path.Combine(s_scratch, "smoke.docx");
+            DocumentFiles.SaveDocx(DemoDocuments.Report(), path, embedFonts: false);
+            await window.OpenFileAsync(path);
+            var view = window.Editor!;
+            Check("open .docx", view.Session.FilePath == path && view.Layout.Pages.Count >= 4, view.Layout.Pages.Count + " pages");
+            GoToText(view, "Harbour Light finished");
+            view.TypeForTest("Smoke test. ");
+            Check("typing", view.Session.Document.Body.Paragraphs.Any(p => p.Text.Contains("Smoke test. Harbour")));
+            Check("save", view.Save());
+            var reopened = DocumentFiles.Open(path).Document;
+            Check("saved text reads back", reopened.Body.Paragraphs.Any(p => p.Text.Contains("Smoke test. Harbour")));
+            Check("table of contents kept", DocumentWalker.AllBlocks(reopened.Body.Blocks).OfType<FieldBlock>().Any(f => f.Kind == FieldKind.Toc));
+
+            view.TypeForTest("Autosaved. ");
+            var waited = 0;
+            while (view.Session.IsDirty && waited < 12000)
+            {
+                await Task.Delay(500);
+                waited += 500;
+            }
+            var auto = DocumentFiles.Open(path).Document;
+            Check("automatic save", auto.Body.Paragraphs.Any(p => p.Text.Contains("Autosaved. ")), $"after {waited} ms");
+
+            view.Undo();
+            Check("undo", !view.Session.Document.Body.Paragraphs.Any(p => p.Text.Contains("Autosaved. ")));
+
+            var md = Path.Combine(s_scratch, "notes.md");
+            File.WriteAllText(md, "# Notes\n\nSome *emphasis* and a [link](https://example.com).\n\n- one\n- two\n", new System.Text.UTF8Encoding(false));
+            view.Session.MarkSaved(view.Editor.History.Version);
+            await window.OpenFileAsync(md);
+            var mdView = window.Editor!;
+            Check("open Markdown", mdView.Session.Format == "md" && mdView.Session.FilePath == null && mdView.Session.Document.Body.Paragraphs.First().Props.StyleId == "Heading1");
+
+            var txt = Path.Combine(s_scratch, "plain.txt");
+            File.WriteAllText(txt, "First line\r\nSecond line\r\n");
+            mdView.Session.MarkSaved(mdView.Editor.History.Version);
+            await window.OpenFileAsync(txt);
+            Check("open text", window.Editor!.Session.Document.Body.Paragraphs.Count() >= 2);
+            window.Editor!.Session.MarkSaved(window.Editor.Editor.History.Version);
+        }
+        catch (Exception ex)
+        {
+            results.Add("FAIL exception — " + ex);
+        }
+        File.WriteAllLines(Path.Combine(s_folder, "smoke.txt"), results);
     }
 
     private static void GoToText(EditorView view, string text)

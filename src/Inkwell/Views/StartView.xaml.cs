@@ -18,7 +18,7 @@ public partial class StartView
 {
     private readonly MainWindow _window;
     private static readonly Dictionary<string, BitmapSource> s_templatePreviews = new();
-    private const double PageRatio = 0.7727; // US Letter / A4 portrait, close enough for cards
+    private const double PageRatio = 0.98; // width / height: the top of the page (cards stay short, so more fits)
 
     public StartView(MainWindow window)
     {

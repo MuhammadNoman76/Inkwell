@@ -582,7 +582,9 @@ public sealed class Paginator
                     result = ColumnEnd.PageBreak;
                     break;
                 }
-                var outcome = PlaceParagraph(page, area, layout, ref cursor, ref y, Bottom, previous, atTop, hardBreakBefore && atTop, notes, ref notesHeight, pendingNotes, restartable);
+                // The empty last paragraph Word needs after a final table never gets a page of its own.
+                Func<double> bottom = starting && IsTrailingEmptyAfterTable(cursor.Index) ? () => double.MaxValue : Bottom;
+                var outcome = PlaceParagraph(page, area, layout, ref cursor, ref y, bottom, previous, atTop, hardBreakBefore && atTop, notes, ref notesHeight, pendingNotes, restartable);
                 if (outcome.Placed)
                 {
                     previous = layout;
@@ -667,6 +669,16 @@ public sealed class Paginator
     }
 
     private static bool InTableOrNotes(FlowItem item) => item.IsNoteContent;
+
+    /// <summary>The body's last paragraph, empty, straight after a table (the paragraph Word requires after a final table).</summary>
+    private bool IsTrailingEmptyAfterTable(int index)
+    {
+        if (Pageless || index <= 0 || index >= _flow.Count || _flow[index].IsNoteContent) return false;
+        for (var i = index + 1; i < _flow.Count; i++)
+            if (!_flow[i].IsNoteContent) return false;
+        if (_flow[index].Block is not Paragraph p || p.Inlines.Any(x => x.Length > 0) || p.Props.Section != null) return false;
+        return _flow[index - 1].Block is Table && _flow[index - 1].Section == _flow[index].Section;
+    }
 
     private void Rollback(ColumnArea area, KeepChain chain, List<NoteChunk> notes, ref double notesHeight, PageLayout page)
     {
@@ -868,6 +880,9 @@ public sealed class Paginator
             {
                 hardBreak = ColumnEnd.PageBreak;
                 page.EndMarker = "Page break";
+                // A page break right before the paragraph mark: the mark stays on the break's line (as in Word), so
+                // the next page doesn't start with an empty line, and a break at the very end makes no blank page.
+                if (pos >= layout.Source.Length - 1) finished = true;
                 break;
             }
             if (line.EndBreak == TextRun.ColumnBreak && !Pageless)
