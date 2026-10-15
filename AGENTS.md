@@ -26,6 +26,7 @@ Inkwell is a free Windows word processor ("like Microsoft Word, but modern, bett
   - `Editing/`: `AutoCorrect` + `MarkdownShortcuts` (pure text rules the editor runs after each keystroke; they return edits, never apply them), `DocumentStats` (word / character / paragraph counts matching Word's, measured against Word; cached per paragraph by `Block.Version`).
   - `Proofing/`: `WindowsSpellChecker` (the Windows 8+ Spell Checking API, hand-declared COM, on a private MTA thread; unavailable on Windows 7). Tests must never call `Add`: it changes the user's Windows dictionary.
   - `IO/`: `VersionHistory` (snapshots in `%LOCALAPPDATA%\Inkwell\History`, named mutex, caps) and `RecoveryStore` (crash copies in `%LOCALAPPDATA%\Inkwell\Recovery`). Both report errors through `OnError` and never throw.
+  - `Formats/`: formats other than .docx: Markdown import / export (Markdig), HTML export (page, clipboard CF_HTML), HTML import for pasting (match-destination or keep-source formatting; Word and Google Docs clipboard HTML), plain text, RTF and ODT import. Paste converters return a `PasteResult`: blocks that use the target document's styles, with their lists, pictures and notes already added to it.
 
 ## Units
 - Lengths in the model are twips (1/1440 inch), font sizes half-points, borders eighths of a point, drawings EMU (914 400 per inch) — exactly as in the XML. Layout works in WPF device-independent pixels (1/96 inch): twips / 15.
