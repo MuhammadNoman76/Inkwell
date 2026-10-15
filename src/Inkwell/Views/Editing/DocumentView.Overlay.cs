@@ -390,3 +390,36 @@ public sealed partial class DocumentView
         Redraw();
     }
 }
+
+public sealed partial class DocumentView
+{
+    /// <summary>The rectangle of a position in view coordinates (null when it isn't laid out).</summary>
+    public Rect? ViewRectOf(DocPos pos)
+    {
+        if (Layout == null || pos.Para == null) return null;
+        var place = Layout.Caret(pos, false, EditingHeaderFooter ? HeaderFooterPage : null);
+        if (place == null) return null;
+        var top = PageToView(place.Value.Page, place.Value.Rect.TopLeft);
+        return new Rect(top.X, top.Y, 1, place.Value.Rect.Height * _zoom);
+    }
+}
+
+public sealed partial class DocumentView
+{
+    /// <summary>The page and box where a picture is (floating or in line), or null when it isn't laid out.</summary>
+    public (PageLayout Page, Rect Box)? FindDrawing(DrawingObject drawing)
+    {
+        if (Layout == null) return null;
+        foreach (var page in Layout.Pages)
+        {
+            if (page.Floats.Any(f => ReferenceEquals(f.Drawing, drawing)))
+                return (page, page.Floats.First(f => ReferenceEquals(f.Drawing, drawing)).Box);
+        }
+        foreach (var page in Layout.Pages)
+        {
+            var box = DrawingBox(page, drawing);
+            if (box != null) return (page, box.Value);
+        }
+        return null;
+    }
+}

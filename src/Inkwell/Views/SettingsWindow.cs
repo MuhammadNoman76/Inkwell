@@ -4,13 +4,14 @@ using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Media;
 using Inkwell.Controls;
-using Inkwell.Interop;
+using Inkwell.Core.Editing;
+using Inkwell.Core.Templates;
 using Inkwell.Services;
 using Inkwell.Themes;
 
 namespace Inkwell.Views;
 
-/// <summary>Settings: appearance, autosave, smart guides, slide show displays, updates, about.</summary>
+/// <summary>Settings: appearance, writing, autocorrect, saving and history, new documents, updates, about.</summary>
 public sealed class SettingsWindow : FluentWindow
 {
     private static SettingsWindow? s_open;
@@ -19,59 +20,115 @@ public sealed class SettingsWindow : FluentWindow
     public SettingsWindow()
     {
         Title = "Settings";
-        Width = 720;
-        Height = 780;
+        Width = 760;
+        Height = 820;
         MinWidth = 540;
         MinHeight = 420;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         var s = AppSettings.Current;
 
-        var stack = new StackPanel { Margin = new Thickness(32, 20, 32, 32), MaxWidth = 820 };
+        var stack = new StackPanel { Margin = new Thickness(32, 20, 32, 32), MaxWidth = 860 };
         var title = new TextBlock { Text = "Settings", Margin = new Thickness(0, 0, 0, 20) };
         title.SetResourceReference(StyleProperty, "Text.Title");
         stack.Children.Add(title);
 
         Header(stack, "Appearance");
-        stack.Children.Add(Row("Icon.DarkTheme", "App theme", "Light or dark; the accent colour follows Windows. Slides always use their own theme.",
+        stack.Children.Add(Row("Icon.DarkTheme", "App theme", "Light or dark; the accent colour follows Windows.",
             Combo(new[] { "Use my Windows setting", "Light", "Dark" }, (int)s.Theme, i =>
             {
                 var theme = (AppTheme)i;
                 AppSettings.Update(x => x.Theme = theme);
                 ThemeManager.SetMode(theme);
             }, "App theme")));
+        stack.Children.Add(Row("Icon.WeatherMoon", "Dark pages in dark mode",
+            "Off: white pages on a dark background, as they will print. On: dark pages with light text, easier on the eyes at night (printing and PDF are never affected).",
+            Switch(s.DarkPaper, on => AppSettings.Update(x => x.DarkPaper = on), "Dark pages in dark mode")));
 
-        Header(stack, "Editing");
-        stack.Children.Add(Row("Icon.Save", "Save automatically", "Saves your presentation a few seconds after you stop editing. New presentations are saved automatically once you've saved them the first time.",
-            Switch(s.AutoSaveFile, on => AppSettings.Update(x => x.AutoSaveFile = on), "Save automatically")));
-        var autosaveValues = new[] { 0, 1, 2, 5, 10 };
-        stack.Children.Add(Row("Icon.History", "Keep a recovery copy", "If Inkwell closes unexpectedly, unsaved work can be recovered from the start screen.",
-            Combo(new[] { "Off", "Every minute", "Every 2 minutes", "Every 5 minutes", "Every 10 minutes" }, Math.Max(0, Array.IndexOf(autosaveValues, s.AutosaveMinutes)), i =>
-            {
-                var minutes = autosaveValues[i];
-                AppSettings.Update(x => x.AutosaveMinutes = minutes);
-            }, "Recovery copy interval")));
-        stack.Children.Add(Row("Icon.Ruler", "Smart guides", "Snap to edges, centres and equal spacing while moving things. Hold Alt to skip them once.",
-            Switch(s.SnapToGuides, on => AppSettings.Update(x => x.SnapToGuides = on), "Smart guides")));
-        stack.Children.Add(Row("Icon.TextProofingTools", "Check spelling as I type", "Underlines misspelt words in red while you edit slide text and notes. Right-click a word for suggestions.",
+        Header(stack, "Writing");
+        var author = new TextBox { Width = 240, Text = s.AuthorName ?? "" };
+        Ui.SetPlaceholder(author, Environment.UserName);
+        author.LostFocus += (_, _) => AppSettings.Update(x => x.AuthorName = string.IsNullOrWhiteSpace(author.Text) ? null : author.Text.Trim());
+        AutomationProperties.SetName(author, "Your name");
+        stack.Children.Add(Row("Icon.Person", "Your name", "Shown on your comments and tracked changes.", author));
+        stack.Children.Add(Row("Icon.TextProofingTools", "Check spelling as I type",
+            Core.Proofing.WindowsSpellChecker.IsSupportedOs
+                ? "Red squiggles under misspelt words, using Windows' own dictionaries for the languages you've added. Right-click a word for suggestions."
+                : "Spell checking needs Windows 8 or later; it isn't available on this version of Windows.",
             Switch(s.SpellCheck, on => AppSettings.Update(x => x.SpellCheck = on), "Check spelling as I type")));
+        stack.Children.Add(Row("Icon.Code", "Markdown shortcuts", "Type # for a heading, - for a bullet, 1. for a numbered list, > for a quote, **bold**, _italic_ and `code`. Each one is undone with a single Ctrl+Z.",
+            Switch(s.MarkdownShortcuts, on => AppSettings.Update(x => x.MarkdownShortcuts = on), "Markdown shortcuts")));
+        stack.Children.Add(Row("Icon.SlashForward", "Slash commands", "Type / at the start of a line to insert a table, heading, picture, contents, footnote and more.",
+            Switch(s.SlashCommands, on => AppSettings.Update(x => x.SlashCommands = on), "Slash commands")));
+        stack.Children.Add(Row("Icon.ClipboardPaste", "Paste matches my document",
+            "Pasted text takes your document's fonts and styles (bold, italic, links and lists are kept). A small chip after pasting lets you keep the source formatting instead. Ctrl+Shift+V always pastes plain text.",
+            Switch(s.PasteMatchesDestination, on => AppSettings.Update(x => x.PasteMatchesDestination = on), "Paste matches my document")));
 
-        Header(stack, "Slide show");
-        stack.Children.Add(Row("Icon.Presenter", "Presenter view", "With two displays, show your notes, the next slide and a timer on yours while the audience sees the slides.",
-            Switch(s.UsePresenterView, on => AppSettings.Update(x => x.UsePresenterView = on), "Presenter view")));
-        var monitors = Native.Monitors();
-        var names = new List<string> { "Automatic (the second display)" };
-        names.AddRange(monitors.Select(m => m.Describe));
-        var selected = monitors.FindIndex(m => m.Device == s.AudienceDisplay) + 1;
-        stack.Children.Add(Row("Icon.Desktop", "Show slides on", monitors.Count > 1 ? $"{monitors.Count} displays connected." : "One display connected: the slides fill it.",
-            Combo(names, Math.Max(0, selected), i =>
+        Header(stack, "Autocorrect");
+        var note = new TextBlock
+        {
+            Text = "Every automatic change shows a small chip and is undone by one Ctrl+Z straight after it. Capitals are never added after abbreviations such as i.e., e.g. or etc.",
+            TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(2, 0, 0, 10),
+        };
+        note.SetResourceReference(StyleProperty, "Text.Caption");
+        stack.Children.Add(note);
+        foreach (var rule in AutoCorrectRules.All.Where(r => r.Id is not (AutoCorrectRules.MarkdownBlocks or AutoCorrectRules.MarkdownInline)))
+        {
+            var id = rule.Id;
+            var enabled = rule.EnabledByDefault ? !s.DisabledAutoCorrect.Contains(id) : s.DisabledAutoCorrect.Contains("+" + id);
+            stack.Children.Add(Row("Icon.Wand", rule.Name, rule.Description, Switch(enabled, on => AppSettings.Update(x =>
             {
-                var device = i == 0 ? "" : monitors[i - 1].Device;
-                AppSettings.Update(x => x.AudienceDisplay = device);
-            }, "Display for the audience")));
+                x.DisabledAutoCorrect.Remove(id);
+                x.DisabledAutoCorrect.Remove("+" + id);
+                if (rule.EnabledByDefault && !on) x.DisabledAutoCorrect.Add(id);
+                if (!rule.EnabledByDefault && on) x.DisabledAutoCorrect.Add("+" + id);
+            }), rule.Name)));
+        }
+
+        Header(stack, "Saving");
+        stack.Children.Add(Row("Icon.Save", "Save automatically",
+            "Saves a document that has a file a few seconds after you stop typing. New documents are never saved automatically until you choose where.",
+            Switch(s.AutoSaveFile, on => AppSettings.Update(x => x.AutoSaveFile = on), "Save automatically")));
+        var recoveryValues = new[] { 0, 1, 2, 5, 10 };
+        stack.Children.Add(Row("Icon.ArrowSync", "Keep a recovery copy", "If Inkwell closes unexpectedly, unsaved work can be recovered from the start screen.",
+            Combo(new[] { "Off", "Every minute", "Every 2 minutes", "Every 5 minutes", "Every 10 minutes" }, Math.Max(0, Array.IndexOf(recoveryValues, s.RecoveryMinutes)), i =>
+            {
+                var minutes = recoveryValues[i];
+                AppSettings.Update(x => x.RecoveryMinutes = minutes);
+            }, "Recovery copy interval")));
+        stack.Children.Add(Row("Icon.History", "Version history",
+            "Keeps earlier versions of your saved documents on this PC (in your local app data), so you can look back and restore one. Nothing leaves your PC.",
+            Switch(s.VersionHistory, on => AppSettings.Update(x => x.VersionHistory = on), "Version history")));
+        var capValues = new[] { 200, 500, 1000, 2000 };
+        stack.Children.Add(Row("Icon.Delete", "Space for version history", "The oldest versions are removed when history reaches this size (the newest version of each document is always kept).",
+            Combo(new[] { "200 MB", "500 MB", "1 GB", "2 GB" }, Math.Max(0, Array.IndexOf(capValues, s.HistoryTotalMegabytes)), i =>
+            {
+                var mb = capValues[i];
+                AppSettings.Update(x => x.HistoryTotalMegabytes = mb);
+            }, "Space for version history")));
+        stack.Children.Add(Row("Icon.TextFont", "Embed Inkwell's fonts in documents",
+            "Includes the fonts Inkwell bundles (Literata, Inter and the others, all under the SIL Open Font License) in saved .docx files, so they look the same on PCs that don't have them.",
+            Switch(s.EmbedFonts, on => AppSettings.Update(x => x.EmbedFonts = on), "Embed fonts")));
+
+        Header(stack, "New documents");
+        var designs = DocumentDesigns.All.ToList();
+        stack.Children.Add(Row("Icon.Color", "Design for blank documents", "Fonts, sizes and colours of the styles. You can change the design of any document later.",
+            Combo(designs.Select(d => d.Name + " · " + d.Description), Math.Max(0, designs.FindIndex(d => d.Id == s.DefaultDesign)), i =>
+            {
+                var id = designs[i].Id;
+                AppSettings.Update(x => x.DefaultDesign = id);
+            }, "Design for blank documents")));
+        var papers = new[] { "auto", "a4", "letter" };
+        stack.Children.Add(Row("Icon.DocumentOnePage", "Paper size", "Automatic picks US Letter in the United States and Canada and A4 elsewhere.",
+            Combo(new[] { "Automatic (by region)", "A4", "US Letter" }, Math.Max(0, Array.IndexOf(papers, s.DefaultPaper)), i =>
+            {
+                var paper = papers[i];
+                AppSettings.Update(x => x.DefaultPaper = paper);
+            }, "Paper size")));
 
         Header(stack, "Updates");
         stack.Children.Add(Row("Icon.ArrowSync", "Check for updates automatically",
-            "Once a day Inkwell downloads a small file from nomanshafiq.com to see if there's a new version. Nothing about you or your files is sent.",
+            "Once a day Inkwell downloads a small file from nomanshafiq.com to see if there's a new version. Nothing about you or your documents is sent.",
             Switch(s.CheckForUpdates, on => AppSettings.Update(x => x.CheckForUpdates = on), "Check for updates automatically")));
         var check = new Button { Content = "Check now", VerticalAlignment = VerticalAlignment.Center };
         check.Click += async (_, _) =>
@@ -133,6 +190,13 @@ public sealed class SettingsWindow : FluentWindow
         s_open = new SettingsWindow();
         if (owner != null && owner.IsVisible) s_open.Owner = owner;
         else s_open.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+        if (MainWindow.IsTestOffscreen)
+        {
+            s_open.WindowStartupLocation = WindowStartupLocation.Manual;
+            s_open.Left = SystemParameters.VirtualScreenLeft - 3200;
+            s_open.Top = SystemParameters.VirtualScreenTop + 20;
+            s_open.ShowActivated = false;
+        }
         s_open.Show();
     }
 
@@ -148,7 +212,7 @@ public sealed class SettingsWindow : FluentWindow
         var row = new Border();
         row.SetResourceReference(StyleProperty, "SettingRow");
         var dock = new DockPanel();
-        var iconView = new IconView { Width = 20, Height = 20, Margin = new Thickness(2, 0, 16, 0), Data = (Geometry)FindResource(icon) };
+        var iconView = new IconView { Width = 20, Height = 20, Margin = new Thickness(2, 0, 16, 0), Data = TryFindResource(icon) as Geometry ?? (Geometry)FindResource("Icon.Settings") };
         DockPanel.SetDock(iconView, Dock.Left);
         dock.Children.Add(iconView);
         control.VerticalAlignment = VerticalAlignment.Center;
@@ -161,7 +225,7 @@ public sealed class SettingsWindow : FluentWindow
         text.Children.Add(t);
         if (description != null)
         {
-            var d = new TextBlock { Text = description };
+            var d = new TextBlock { Text = description, TextWrapping = TextWrapping.Wrap };
             d.SetResourceReference(StyleProperty, "Text.Caption");
             text.Children.Add(d);
         }
@@ -172,7 +236,7 @@ public sealed class SettingsWindow : FluentWindow
 
     private static ComboBox Combo(IEnumerable<string> items, int selected, Action<int> changed, string name)
     {
-        var combo = new ComboBox { Width = 240 };
+        var combo = new ComboBox { Width = 260 };
         foreach (var i in items) combo.Items.Add(new ComboBoxItem { Content = i });
         combo.SelectedIndex = selected;
         combo.SelectionChanged += (_, _) =>

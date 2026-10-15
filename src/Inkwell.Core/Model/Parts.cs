@@ -157,12 +157,11 @@ public sealed class DocSettings
         if (pr == null && list.Count == 0) return;
         pr ??= Ensure(name);
         pr.Elements(Ns.W + child).Remove();
-        var insertAt = pr.Elements().FirstOrDefault();
+        // The ids come after pos, numFmt, numStart and numRestart (CT_FtnDocProps).
         foreach (var id in list)
         {
             var e = new XElement(Ns.W + child, new XAttribute(Ns.W + "id", Ox.Str(id)));
-            if (insertAt != null) insertAt.AddBeforeSelf(e);
-            else pr.Add(e);
+            pr.Add(e);
         }
     }
 }

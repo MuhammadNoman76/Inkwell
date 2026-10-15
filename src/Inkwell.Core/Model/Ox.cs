@@ -70,6 +70,13 @@ public static class SchemaOrder
         return d;
     }
 
+    /// <summary>Gives <paramref name="alias"/> the same position as <paramref name="of"/> (elements of one choice group).</summary>
+    private static Dictionary<string, int> WithAlias(Dictionary<string, int> d, string alias, string of)
+    {
+        d[alias] = d[of];
+        return d;
+    }
+
     public static readonly Dictionary<string, int> RunProps = Make(
         "ins", "del", "moveFrom", "moveTo", "rStyle", "rFonts", "b", "bCs", "i", "iCs", "caps", "smallCaps", "strike", "dstrike", "outline",
         "shadow", "emboss", "imprint", "noProof", "snapToGrid", "vanish", "webHidden", "color", "spacing", "w", "kern", "position", "sz",
@@ -83,9 +90,9 @@ public static class SchemaOrder
         "snapToGrid", "spacing", "ind", "contextualSpacing", "mirrorIndents", "suppressOverlap", "jc", "textDirection", "textAlignment",
         "textboxTightWrap", "outlineLvl", "divId", "cnfStyle", "*", "rPr", "sectPr", "pPrChange");
 
-    public static readonly Dictionary<string, int> SectProps = Make(
+    public static readonly Dictionary<string, int> SectProps = WithAlias(Make(
         "headerReference", "footnotePr", "endnotePr", "type", "pgSz", "pgMar", "paperSrc", "pgBorders", "lnNumType", "pgNumType", "cols",
-        "formProt", "vAlign", "noEndnote", "titlePg", "textDirection", "bidi", "rtlGutter", "docGrid", "printerSettings", "*", "sectPrChange");
+        "formProt", "vAlign", "noEndnote", "titlePg", "textDirection", "bidi", "rtlGutter", "docGrid", "printerSettings", "*", "sectPrChange"), "footerReference", "headerReference");
 
     public static readonly Dictionary<string, int> TableProps = Make(
         "tblStyle", "tblpPr", "tblOverlap", "bidiVisual", "tblStyleRowBandSize", "tblStyleColBandSize", "tblW", "jc", "tblCellSpacing", "tblInd",

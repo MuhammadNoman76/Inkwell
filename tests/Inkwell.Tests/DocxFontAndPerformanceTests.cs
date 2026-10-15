@@ -31,7 +31,7 @@ public class DocxFontTests
     public void EmbedFonts_EmbedsTheBundledFontsTheDocumentUses_AndTheyReadBack()
     {
         Assert.True(Directory.Exists(FontCatalog.Directory), "The bundled fonts should be next to the tests: " + FontCatalog.Directory);
-        var doc = new Document(); // theme fonts: Literata (not shipped as files here) and Inter
+        var doc = new Document(); // theme fonts: Literata (headings) and Inter (body), both bundled
         var p = new Paragraph("Body in the theme font. ");
         var code = new TextRun("code();");
         code.Props.SetLatinFont("JetBrains Mono");
@@ -53,7 +53,7 @@ public class DocxFontTests
         Assert.DoesNotContain(table.Elements(W + "font"), f => (string?)f.Attribute(W + "name") == "Arial" && f.Elements().Any(e => e.Name.LocalName.StartsWith("embed", StringComparison.Ordinal)));
 
         var embedded = DocxFonts.Read(bytes);
-        var expected = FontCatalog.FilesFor("Inter").Concat(FontCatalog.FilesFor("JetBrains Mono")).ToList();
+        var expected = FontCatalog.FilesFor("Literata").Concat(FontCatalog.FilesFor("Inter")).Concat(FontCatalog.FilesFor("JetBrains Mono")).ToList();
         Assert.Equal(expected.Count, embedded.Count);
         Assert.Equal(fontParts.Count, embedded.Count);
         foreach (var font in embedded)

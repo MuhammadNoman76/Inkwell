@@ -30,7 +30,7 @@ public sealed class AboutDialog : FluentWindow
         var name = new TextBlock { Text = "Inkwell", FontSize = 26 };
         name.SetResourceReference(StyleProperty, "Text.Title");
         titles.Children.Add(name);
-        var tagline = new TextBlock { Text = "Presentations that look designed. Without the effort." };
+        var tagline = new TextBlock { Text = "Write beautifully. Without fighting your document." };
         tagline.SetResourceReference(StyleProperty, "Text.BodySecondary");
         titles.Children.Add(tagline);
         var version = new TextBlock { Text = $"Version {Updater.CurrentVersionText} · {UpdateService.EditionName(Updater.Edition)} · © 2026 Muhammad Noman", Margin = new Thickness(0, 4, 0, 0) };
@@ -42,8 +42,9 @@ public sealed class AboutDialog : FluentWindow
 
         var credits = new TextBlock
         {
-            Text = "Inkwell uses Microsoft's Open XML SDK (MIT) for PowerPoint files, PDFsharp (MIT) for PDF export, Fluent UI System Icons (MIT), " +
-                   "and fonts under the SIL Open Font License: Inter, Plus Jakarta Sans, DM Sans, Space Grotesk, Playfair Display, DM Serif Display, Source Serif 4 and JetBrains Mono.",
+            Text = "Inkwell uses Microsoft's Open XML SDK (MIT) for Word documents, PDFsharp (MIT) for PDF export, Markdig (BSD-2-Clause) for Markdown, Fluent UI System Icons (MIT), " +
+                   "and fonts under the SIL Open Font License: Literata, Inter, Source Serif 4, Playfair Display, DM Serif Display, DM Sans, Plus Jakarta Sans, Space Grotesk, JetBrains Mono, Noto Naskh Arabic and Noto Nastaliq Urdu. " +
+                   "Inkwell is independent and not affiliated with Microsoft; Word is a trademark of Microsoft Corporation.",
             TextWrapping = TextWrapping.Wrap,
             Margin = new Thickness(0, 0, 0, 12),
         };

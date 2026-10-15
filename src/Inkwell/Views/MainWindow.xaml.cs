@@ -9,7 +9,7 @@ using Inkwell.Services;
 
 namespace Inkwell.Views;
 
-/// <summary>A Inkwell window: the start screen, or one deck in the editor.</summary>
+/// <summary>An Inkwell window: the start screen, or one document in the editor.</summary>
 public partial class MainWindow
 {
     private StartView? _start;
@@ -38,7 +38,7 @@ public partial class MainWindow
     /// <summary>INKWELL_TEST_OFFSCREEN=1: windows open off screen and never take the focus (automated tests).</summary>
     public static bool IsTestOffscreen { get; } = Environment.GetEnvironmentVariable("INKWELL_TEST_OFFSCREEN") == "1";
 
-    public DeckSession? Session => _editor?.Session;
+    public DocumentSession? Session => _editor?.Session;
     public EditorView? Editor => _editor;
     public StartView? Start => _start;
 
@@ -58,7 +58,7 @@ public partial class MainWindow
         Dispatcher.BeginInvoke(new Action(() => _start.FocusFirst()), DispatcherPriority.Loaded);
     }
 
-    public void ShowEditor(DeckSession session)
+    public void ShowEditor(DocumentSession session)
     {
         _editor?.Detach();
         _editor = new EditorView(this, session);
@@ -85,7 +85,7 @@ public partial class MainWindow
         Focus();
     }
 
-    /// <summary>Opens a deck or imports a PowerPoint file into this window.</summary>
+    /// <summary>Opens a document (or imports Markdown, text, RTF or ODT) into this window.</summary>
     public async Task OpenFileAsync(string path)
     {
         if (!File.Exists(path))
@@ -95,44 +95,26 @@ public partial class MainWindow
             _start?.Refresh();
             return;
         }
-        var import = DocumentLoader.IsPowerPoint(path);
-        var doc = await RunBusyAsync(import ? $"Importing {Path.GetFileName(path)}…" : $"Opening {Path.GetFileName(path)}…",
-            import ? "Converting slides, text and pictures" : "", () => DocumentLoader.Load(path));
-        if (doc == null) return;
-
-        var session = new DeckSession(doc.Deck, doc.Media, import ? null : path);
+        var result = await RunBusyAsync($"Opening {Path.GetFileName(path)}…", "", () => DocumentFiles.Open(path));
+        if (result == null) return;
+        var session = new DocumentSession(result.Document, result.SavePath, result.Format);
+        if (result.SavePath == null) session.MarkDirty();
         ShowEditor(session);
-        Log.Info($"{(import ? "Imported" : "Opened")} {path} ({session.Deck.Slides.Count} slides)");
-        if (import)
-        {
-            session.Deck.Title = Path.GetFileNameWithoutExtension(path);
-            session.MarkDirty();
-            var count = session.Deck.Slides.Count;
-            var text = $"Imported {count} slide{(count == 1 ? "" : "s")} from PowerPoint.";
-            if (doc.Warnings.Count == 0) ShowMessage(text, 5);
-            else
-            {
-                // Say what didn't come over (SmartArt, effects changed to the closest one, media, …) where it can be read.
-                var list = string.Join(Environment.NewLine, doc.Warnings.Select(w => "•  " + w));
-                await Dispatcher.InvokeAsync(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
-                MessageDialog.Show(this, text.TrimEnd('.'), "Some things couldn't be brought over exactly:" + Environment.NewLine + Environment.NewLine + list, "OK", icon: DialogIcon.Info);
-            }
-        }
-        else
-        {
-            AppSettings.AddRecent(path);
-            if (doc.Warnings.Count > 0) ShowMessage(string.Join(" ", doc.Warnings.Take(3)), 8);
-        }
+        Log.Info($"Opened {path} ({result.Format})");
+        if (result.SavePath != null) AppSettings.AddRecent(path);
+        else AppSettings.AddRecent(path);
+        await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+        _editor?.ShowOpenNotice(result);
     }
 
     private void OnDropFiles(object sender, DragEventArgs e)
     {
-        if (_editor != null) return; // the editor handles its own drops (pictures)
+        if (_editor != null) return; // the editor handles its own drops (pictures, documents)
         if (e.Data.GetData(DataFormats.FileDrop) is not string[] files) return;
-        var decks = files.Where(f => DocumentLoader.IsDeck(f) || DocumentLoader.IsPowerPoint(f)).ToList();
-        if (decks.Count == 0) return;
-        App.Current.OpenPath(decks[0], this);
-        foreach (var other in decks.Skip(1).Take(7)) App.Current.OpenPath(other, null);
+        var docs = files.Where(DocumentFiles.CanOpen).ToList();
+        if (docs.Count == 0) return;
+        App.Current.OpenPath(docs[0], this);
+        foreach (var other in docs.Skip(1).Take(7)) App.Current.OpenPath(other, null);
         e.Handled = true;
     }
 
@@ -159,7 +141,7 @@ public partial class MainWindow
         }
         catch (Exception ex)
         {
-            if (ex is not DeckFileException) Log.Error(ex, title);
+            if (ex is not DocumentFileException) Log.Error(ex, title);
             ShowError(ex);
             return null;
         }
@@ -171,7 +153,6 @@ public partial class MainWindow
         }
     }
 
-    /// <summary>Shows the busy overlay while <paramref name="work"/> runs on the UI thread in steps (rendering must stay on it).</summary>
     public void SetBusy(string? title, string detail = "", double fraction = -1)
     {
         if (title == null)
@@ -191,11 +172,8 @@ public partial class MainWindow
     {
         var (heading, message) = ex switch
         {
-            DeckFileException { Problem: DeckFileProblem.TooNew } d => ("Made with a newer Inkwell", d.Message),
-            DeckFileException { Problem: DeckFileProblem.NotADeck } d => ("Inkwell can't open this file", d.Message),
-            DeckFileException { Problem: DeckFileProblem.Damaged } d => ("The file is damaged", d.Message),
-            DeckFileException d => ("The file couldn't be opened", d.Message),
-            UnauthorizedAccessException => ("Access denied", "Windows didn't allow Inkwell to use this file."),
+            DocumentFileException d => (d.Heading, d.Message),
+            UnauthorizedAccessException => ("Access denied", "Windows didn't allow Inkwell to use this file. It may be read-only or in a protected folder."),
             IOException io => ("The file couldn't be read or written", io.Message),
             _ => ("Something went wrong", ex.Message),
         };
@@ -230,7 +208,7 @@ public partial class MainWindow
             return;
         }
         var bounds = WindowState == WindowState.Normal ? new Rect(Left, Top, Width, Height) : RestoreBounds;
-        if (bounds.Width > 0 && bounds.Height > 0)
+        if (bounds.Width > 0 && bounds.Height > 0 && !IsTestOffscreen)
         {
             AppSettings.Update(s => s.Window = new WindowPlacement
             {
@@ -263,9 +241,13 @@ public partial class MainWindow
         }
         var screen = new Rect(SystemParameters.VirtualScreenLeft, SystemParameters.VirtualScreenTop, SystemParameters.VirtualScreenWidth, SystemParameters.VirtualScreenHeight);
         var rect = new Rect(placement.Left, placement.Top, placement.Width, placement.Height);
-        if (!screen.IntersectsWith(rect) || rect.Top < screen.Top - 8) return;
+        if (!screen.IntersectsWith(rect) || rect.Top < screen.Top - 8)
+        {
+            FitFirstStart();
+            return;
+        }
         // Cascade windows opened after the first so they don't sit exactly on top of each other.
-        var offset = App.Current.DeckWindows.Count(w => w != this && w.IsVisible) * 28;
+        var offset = App.Current.DocumentWindows.Count(w => w != this && w.IsVisible) * 28;
         WindowStartupLocation = WindowStartupLocation.Manual;
         Left = placement.Left + offset;
         Top = placement.Top + offset;
@@ -275,9 +257,8 @@ public partial class MainWindow
     }
 
     /// <summary>
-    /// First start (nothing saved yet): the preferred 1440 × 900 shrinks to fit the main display's work area,
-    /// centred on it, so the title bar is never above the top of the screen. When even the minimum size doesn't
-    /// fit, the window opens maximized. <see cref="Controls.FluentWindow.KeepOnScreen"/> then checks the real display.
+    /// First start: the preferred size shrinks to fit the main display's work area, centred on it, so the title
+    /// bar is never above the top of the screen. <see cref="Controls.FluentWindow.KeepOnScreen"/> then checks the real display.
     /// </summary>
     private void FitFirstStart()
     {
@@ -352,7 +333,7 @@ public partial class MainWindow
             return;
         }
         // Everything must be saved first: the installer closes Inkwell.
-        foreach (var w in App.Current.DeckWindows.ToList())
+        foreach (var w in App.Current.DocumentWindows.ToList())
         {
             if (w.Editor == null || !w.Session!.IsDirty) continue;
             if (!w.Editor.ConfirmClose()) return;

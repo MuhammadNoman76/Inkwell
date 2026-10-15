@@ -4,7 +4,8 @@ Shared project memory for coding assistants (Codex, Claude Code, Gemini CLI, …
 
 ## What this is
 Inkwell is a free Windows word processor ("like Microsoft Word, but modern, better-looking, and without Word's irritations"), built in C#/WPF.
-- Owner: Muhammad Noman (https://github.com/MuhammadNoman76). No repository on GitHub yet: commit locally, never push.
+- Owner: Muhammad Noman (https://github.com/MuhammadNoman76). Repository: https://github.com/MuhammadNoman76/Inkwell (capital I). Commit locally; the owner pushes after review (never push yourself).
+- Download page: https://www.nomanshafiq.com/inkwell/. Installers are linked as `https://github.com/MuhammadNoman76/Inkwell/raw/refs/heads/main/release/<file>`, checksums at `https://github.com/MuhammadNoman76/Inkwell/blob/main/release/SHA256SUMS.txt`. Update feed: `https://www.nomanshafiq.com/updates/inkwell.json` (`INKWELL_UPDATE_URL` overrides it).
 - Tagline: "Write beautifully. Without fighting your document."
 - Look: Windows 11 Fluent like Stagecraft and Trove (Mica, light / dark and the accent colour, Segoe UI Variable, vector Fluent System Icons). No ribbon: a slim command bar, a contextual panel on the right, an optional outline pane on the left, pages in the middle.
 - Opens and saves .docx natively and keeps everything it doesn't understand.
