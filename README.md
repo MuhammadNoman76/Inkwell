@@ -75,10 +75,10 @@ Inkwell is a free word processor for Windows. It opens and saves Word documents 
 
 | Edition | For | Installer |
 |---|---|---|
-| x64 | Windows 10 / 11, 64-bit Intel or AMD (most PCs) | [Inkwell-Setup-1.0.0-x64.exe](https://github.com/MuhammadNoman76/Inkwell/raw/refs/heads/main/release/Inkwell-Setup-1.0.0-x64.exe) (46.8 MB) |
-| ARM64 | Windows 10 / 11 on ARM (Snapdragon, Surface Pro X…) | [Inkwell-Setup-1.0.0-arm64.exe](https://github.com/MuhammadNoman76/Inkwell/raw/refs/heads/main/release/Inkwell-Setup-1.0.0-arm64.exe) (41.6 MB) |
-| x86 | 32-bit Windows 10 | [Inkwell-Setup-1.0.0-x86.exe](https://github.com/MuhammadNoman76/Inkwell/raw/refs/heads/main/release/Inkwell-Setup-1.0.0-x86.exe) (43.0 MB) |
-| Windows 7 / 8.1 | Windows 7 SP1 and 8.1, 32- or 64-bit (needs .NET Framework 4.8) | [Inkwell-Setup-1.0.0-win7-8.exe](https://github.com/MuhammadNoman76/Inkwell/raw/refs/heads/main/release/Inkwell-Setup-1.0.0-win7-8.exe) (6.7 MB) |
+| x64 | Windows 10 / 11, 64-bit Intel or AMD (most PCs) | [Inkwell-Setup-1.0.1-x64.exe](https://github.com/MuhammadNoman76/Inkwell/raw/refs/heads/main/release/Inkwell-Setup-1.0.1-x64.exe) (46.8 MB) |
+| ARM64 | Windows 10 / 11 on ARM (Snapdragon, Surface Pro X…) | [Inkwell-Setup-1.0.1-arm64.exe](https://github.com/MuhammadNoman76/Inkwell/raw/refs/heads/main/release/Inkwell-Setup-1.0.1-arm64.exe) (41.6 MB) |
+| x86 | 32-bit Windows 10 | [Inkwell-Setup-1.0.1-x86.exe](https://github.com/MuhammadNoman76/Inkwell/raw/refs/heads/main/release/Inkwell-Setup-1.0.1-x86.exe) (43.0 MB) |
+| Windows 7 / 8.1 | Windows 7 SP1 and 8.1, 32- or 64-bit (needs .NET Framework 4.8) | [Inkwell-Setup-1.0.1-win7-8.exe](https://github.com/MuhammadNoman76/Inkwell/raw/refs/heads/main/release/Inkwell-Setup-1.0.1-win7-8.exe) (6.7 MB) |
 
 Checksums: [SHA256SUMS.txt](https://github.com/MuhammadNoman76/Inkwell/blob/main/release/SHA256SUMS.txt). Download page: https://www.nomanshafiq.com/inkwell/
 
