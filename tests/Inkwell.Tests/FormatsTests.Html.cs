@@ -217,7 +217,7 @@ public class FormatsTestsHtmlImport
     private static TextRun Run(PasteResult r, string text) =>
         Paragraphs(r).SelectMany(p => p.Inlines).OfType<TextRun>().First(t => t.Text.Contains(text));
 
-    private const string Browser =
+    internal const string Browser =
         "<html><body>\n<!--StartFragment--><h2 style=\"color: rgb(0, 0, 0); font-family: Georgia;\">Section &amp; more</h2>" +
         "<p>Text with <a href=\"/docs/page.html\">a relative link</a>, <code>code()</code>, <strong>strong</strong>, <em>em</em>, <u>u</u>, <s>s</s>, H<sub>2</sub>O, x<sup>2</sup>.</p>\n" +
         "<blockquote><p>Quoted text</p></blockquote>\n" +
@@ -307,7 +307,7 @@ public class FormatsTestsHtmlImport
         Assert.Equal("center", Paragraphs(keep)[0].Props.Justification);
     }
 
-    private const string Word =
+    internal const string Word =
         "<html xmlns:o=\"urn:schemas-microsoft-com:office:office\" xmlns:w=\"urn:schemas-microsoft-com:office:word\">\r\n<head>\r\n" +
         "<meta http-equiv=Content-Type content=\"text/html; charset=utf-8\">\r\n<meta name=ProgId content=Word.Document>\r\n" +
         "<!--[if gte mso 9]><xml>\r\n <o:OfficeDocumentSettings>\r\n  <o:AllowPNG/>\r\n </o:OfficeDocumentSettings>\r\n</xml><![endif]-->\r\n" +
@@ -385,7 +385,7 @@ public class FormatsTestsHtmlImport
         Assert.Equal("FF0000", Run(r, "title").Props.Color);
     }
 
-    private const string Google =
+    internal const string Google =
         "<meta charset=\"utf-8\"><b style=\"font-weight:normal;\" id=\"docs-internal-guid-1a2b3c4d-7fff-0b2c-9d8e-0123456789ab\">" +
         "<h1 dir=\"ltr\" style=\"line-height:1.38;margin-top:20pt;margin-bottom:6pt;\"><span style=\"font-size:20pt;font-family:Arial,sans-serif;color:#000000;background-color:transparent;font-weight:400;font-style:normal;font-variant:normal;text-decoration:none;vertical-align:baseline;white-space:pre;white-space:pre-wrap;\">Heading</span></h1>" +
         "<p dir=\"ltr\" style=\"line-height:1.38;margin-top:0pt;margin-bottom:0pt;\"><span style=\"font-size:11pt;font-family:Arial,sans-serif;color:#000000;background-color:transparent;font-weight:400;font-style:normal;font-variant:normal;text-decoration:none;vertical-align:baseline;white-space:pre;white-space:pre-wrap;\">Normal  </span>" +

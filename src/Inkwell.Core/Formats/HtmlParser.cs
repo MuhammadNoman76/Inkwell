@@ -99,6 +99,9 @@ internal static class HtmlParser
         "tbody", "thead", "tfoot", "tr", "td", "th", "caption", "col", "colgroup", "li", "dd", "dt", "head", "body", "title", "style", "script", "meta", "link", "base",
     };
 
+    /// <summary>The deepest element nesting kept (browsers cap it too).</summary>
+    private const int MaxDepth = 400;
+
     /// <summary>Elements end tags don't look past (a stray &lt;/div&gt; in a cell doesn't close the table).</summary>
     private static readonly HashSet<string> Scope = new(StringComparer.Ordinal) { "td", "th", "table", "caption", "template", "#document", "body" };
 
@@ -210,7 +213,7 @@ internal static class HtmlParser
                     var expr = end < 0 ? "" : html.Substring(i + 5, end - i - 5).Trim();
                     var node = new HtmlNode("!if", expr);
                     Current().Add(node);
-                    stack.Add(node);
+                    if (stack.Count < MaxDepth) stack.Add(node);
                     i = close < 0 ? n : close + 1;
                 }
                 else if (string.Compare(html, i, "<![endif", 0, 8, StringComparison.OrdinalIgnoreCase) == 0)
@@ -388,7 +391,8 @@ internal static class HtmlParser
             }
             Current().Add(element);
             var isVoid = Void.Contains(name) || (selfClosing && name.Contains(':'));
-            if (!isVoid) stack.Add(element);
+            // Absurdly deep nesting (hostile or broken pages) stays flat beyond MaxDepth, so walking the tree can't overflow the stack.
+            if (!isVoid && stack.Count < MaxDepth) stack.Add(element);
         }
 
         void EndTag(string name)

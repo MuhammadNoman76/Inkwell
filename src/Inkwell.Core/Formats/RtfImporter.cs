@@ -1054,7 +1054,7 @@ internal sealed class RtfConverter
                 _state.Para.InTable = true;
                 return;
             case "itap":
-                _state.Para.Nest = param;
+                _state.Para.Nest = MathEx.Clamp(param, 0, 16);
                 _state.Para.InTable = param > 0;
                 return;
             case "ls":
@@ -1196,13 +1196,13 @@ internal sealed class RtfConverter
                 EndCell(1);
                 return;
             case "nestcell":
-                EndCell(Math.Max(2, _state.Para.Nest));
+                EndCell(MathEx.Clamp(_state.Para.Nest, 2, 16));
                 return;
             case "row":
                 EndRow(1);
                 return;
             case "nestrow":
-                EndRow(Math.Max(2, _state.Para.Nest));
+                EndRow(MathEx.Clamp(_state.Para.Nest, 2, 16));
                 return;
 
             // ---- breaks and special characters

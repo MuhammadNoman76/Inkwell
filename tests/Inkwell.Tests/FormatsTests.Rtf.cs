@@ -11,7 +11,7 @@ public class FormatsTestsRtf
     private static TextRun Run(IEnumerable<Paragraph> ps, string text) =>
         ps.SelectMany(p => p.Inlines).OfType<TextRun>().First(t => t.Text.Contains(text));
 
-    private const string WordPad =
+    internal const string WordPad =
         "{\\rtf1\\ansi\\ansicpg1252\\deff0\\nouicompat\\deflang1033{\\fonttbl{\\f0\\fnil\\fcharset0 Calibri;}{\\f1\\fnil\\fcharset2 Symbol;}}\r\n" +
         "{\\colortbl ;\\red255\\green0\\blue0;\\red0\\green77\\blue187;}\r\n" +
         "{\\*\\generator Riched20 10.0.22621}\\viewkind4\\uc1 \r\n" +
@@ -62,7 +62,7 @@ public class FormatsTestsRtf
         Assert.Null(ps[5].Props.NumId);
     }
 
-    private static string WordSample(byte[] png)
+    internal static string WordSample(byte[] png)
     {
         var hex = BitConverter.ToString(png).Replace("-", "").ToLowerInvariant();
         return

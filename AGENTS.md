@@ -22,6 +22,7 @@ Inkwell is a free Windows word processor ("like Microsoft Word, but modern, bett
     - Pictures: `DrawingObject` with the picture's bytes in `Document.Media` (by SHA-256), size in EMU, wrap mode and float position; `Original` keeps the `w:drawing` XML so effects and crops survive (the writer patches size / wrap / position into it).
     - `Document.Source` keeps the original package bytes: saving starts from them, so parts Inkwell doesn't rewrite (macros, charts, SmartArt, custom XML, embeddings…) stay byte for byte.
   - `Templates/`: `DocumentDesigns` (the designs: style sets built on theme fonts).
+  - `Formats/`: formats other than .docx: Markdown import / export (Markdig), HTML export (page, clipboard CF_HTML), HTML import for pasting (match-destination or keep-source formatting; Word and Google Docs clipboard HTML), plain text, RTF and ODT import. Paste converters return a `PasteResult`: blocks that use the target document's styles, with their lists, pictures and notes already added to it.
 
 ## Units
 - Lengths in the model are twips (1/1440 inch), font sizes half-points, borders eighths of a point, drawings EMU (914 400 per inch) — exactly as in the XML. Layout works in WPF device-independent pixels (1/96 inch): twips / 15.

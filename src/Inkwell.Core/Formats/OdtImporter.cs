@@ -634,7 +634,26 @@ internal sealed class OdtConverter
         foreach (var e in elements) ConvertBlock(e, output, item);
     }
 
+    /// <summary>How deep blocks and inlines nest (lists in tables in notes…); content deeper than <see cref="MaxDepth"/> is left out.</summary>
+    private int _depth;
+
+    private const int MaxDepth = 200;
+
     private void ConvertBlock(XElement e, List<Block> output, ItemState? item)
+    {
+        if (_depth >= MaxDepth) return;
+        _depth++;
+        try
+        {
+            ConvertBlockCore(e, output, item);
+        }
+        finally
+        {
+            _depth--;
+        }
+    }
+
+    private void ConvertBlockCore(XElement e, List<Block> output, ItemState? item)
     {
         if (e.Name == TextNs + "p" || e.Name == TextNs + "h")
         {
@@ -785,7 +804,20 @@ internal sealed class OdtConverter
 
     private void ConvertInline(XElement e, List<Inline> inlines, RunFmt run, List<Block> after, TextContext? context = null)
     {
-        context ??= new TextContext { LastWasSpace = false };
+        if (_depth >= MaxDepth) return;
+        _depth++;
+        try
+        {
+            ConvertInlineCore(e, inlines, run, after, context ?? new TextContext { LastWasSpace = false });
+        }
+        finally
+        {
+            _depth--;
+        }
+    }
+
+    private void ConvertInlineCore(XElement e, List<Inline> inlines, RunFmt run, List<Block> after, TextContext context)
+    {
         var ns = e.Name.Namespace;
         var local = e.Name.LocalName;
         if (ns == TextNs)
@@ -1072,6 +1104,7 @@ internal sealed class OdtConverter
 
     private void ConvertList(XElement list, List<Block> output, int level, ListInfo? parent)
     {
+        if (_depth >= MaxDepth) return;
         level = MathEx.Clamp(level, 0, 8);
         var styleName = list.Attribute(TextNs + "style-name")?.Value ?? parent?.StyleName;
         int numId;
@@ -1094,7 +1127,18 @@ internal sealed class OdtConverter
             var item = new ItemState(info.NumId, level, header);
             foreach (var content in child.Elements())
             {
-                if (content.Name == TextNs + "list") ConvertList(content, output, level + 1, info);
+                if (content.Name == TextNs + "list")
+                {
+                    _depth++;
+                    try
+                    {
+                        ConvertList(content, output, level + 1, info);
+                    }
+                    finally
+                    {
+                        _depth--;
+                    }
+                }
                 else if (content.Name == TextNs + "p" || content.Name == TextNs + "h") ConvertBlock(content, output, item);
                 else ConvertBlock(content, output, null);
             }

@@ -64,7 +64,7 @@ public static class HtmlExporter
     {
         options ??= new HtmlExportOptions();
         var renderer = new HtmlRenderer(doc, options, wholeDocument: true);
-        return renderer.Document(doc.Body.Blocks);
+        return renderer.Page(doc.Body.Blocks);
     }
 
     /// <summary>Saves the document as an HTML file (UTF-8).</summary>
@@ -440,7 +440,7 @@ internal sealed class HtmlRenderer
 
     // ------------------------------------------------------------------ documents
 
-    public string Document(IEnumerable<Block> blocks)
+    public string Page(IEnumerable<Block> blocks)
     {
         var list = blocks.ToList();
         foreach (var s in _doc.Sections().Skip(1))

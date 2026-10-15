@@ -62,10 +62,29 @@ public static class MarkdownImporter
     {
         design ??= DocumentDesigns.Default;
         var doc = NewDocument.Create(design);
-        var converter = new MarkdownConverter(doc, baseFolder, design.RuleColor, new PasteResult(), Math.Min(Content.TextWidth(doc) * Pictures.EmuPerTwip, 6 * Pictures.EmuPerInch + Pictures.EmuPerInch / 2));
-        doc.Body.Blocks.AddRange(converter.Convert(Markdown.Parse(markdown, Pipeline)));
+        var result = new PasteResult();
+        var converter = new MarkdownConverter(doc, baseFolder, design.RuleColor, result, MaxPictureWidth(doc));
+        var parsed = Parse(markdown, result);
+        doc.Body.Blocks.AddRange(parsed == null ? TextImporter.ToParagraphs(markdown, keepTrailingEmpty: false) : converter.Convert(parsed));
+        doc.Warnings.AddRange(result.Warnings);
         NewDocument.Finish(doc);
         return doc;
+    }
+
+    private static long MaxPictureWidth(Document doc) => Math.Min(Content.TextWidth(doc) * Pictures.EmuPerTwip, 6 * Pictures.EmuPerInch + Pictures.EmuPerInch / 2);
+
+    /// <summary>The parsed Markdown, or null (with a warning) when it is nested too deeply for Markdig.</summary>
+    private static MarkdownDocument? Parse(string markdown, PasteResult result)
+    {
+        try
+        {
+            return Markdown.Parse(markdown, Pipeline);
+        }
+        catch (ArgumentException)
+        {
+            result.Warnings.Add("The Markdown is nested too deeply to read its structure, so it was read as plain text.");
+            return null;
+        }
     }
 
     /// <summary>
@@ -75,8 +94,9 @@ public static class MarkdownImporter
     public static PasteResult ImportFragment(string markdown, Document target, string? baseFolder = null)
     {
         var result = new PasteResult();
-        var converter = new MarkdownConverter(target, baseFolder, "BFBFBF", result, Math.Min(Content.TextWidth(target) * Pictures.EmuPerTwip, 6 * Pictures.EmuPerInch + Pictures.EmuPerInch / 2));
-        result.Blocks.AddRange(converter.Convert(Markdown.Parse(markdown, Pipeline)));
+        var converter = new MarkdownConverter(target, baseFolder, "BFBFBF", result, MaxPictureWidth(target));
+        var parsed = Parse(markdown, result);
+        result.Blocks.AddRange(parsed == null ? TextImporter.ToParagraphs(markdown) : converter.Convert(parsed));
         return result;
     }
 }
